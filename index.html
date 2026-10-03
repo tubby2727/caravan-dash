@@ -230,16 +230,22 @@ const dec = {
 
 /* ---------------- native app mode (Android app wrapper) ---------------- */
 const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
-const CB = NATIVE ? Capacitor.registerPlugin("CaravanBle") : null;
+// Plain (un-bundled) pages get native plugins from Capacitor.Plugins; registerPlugin only exists in bundled apps.
+const CB = !NATIVE ? null
+  : (typeof Capacitor.registerPlugin === "function" ? Capacitor.registerPlugin("CaravanBle")
+  : (Capacitor.Plugins && Capacitor.Plugins.CaravanBle) || null);
+if (NATIVE && !CB) dbgErr("CaravanBle plugin not found in Capacitor.Plugins");
 const KEYS = ["level", "batt", "solar", "status"];
 const CONNTXT = { connected:"Connected", searching:"Searching…", connecting:"Connecting…", noperm:"Allow Bluetooth", "bt off":"Bluetooth off" };
 function b64dv(b){ const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new DataView(u.buffer); }
 function nativePacket(i, b){ if (!b || !KEYS[i]) return; dec[KEYS[i]](b64dv(b)); S.lastRx = Date.now(); DBG.n++; DBG.ev = Date.now(); }
 function nativeConn(st){ S.on = st === "connected"; setPill(CONNTXT[st] || st, S.on); }
 async function nativeSnapshot(){
+  if (!CB) return;
   try { const r = await CB.snapshot(); for (let i = 0; i < 4; i++) nativePacket(i, r["p" + i]); nativeConn(r.state); } catch (_) {}
 }
 async function nativeInit(){
+  if (!CB) return;
   await CB.addListener("packet", e => nativePacket(e.i, e.b));
   await CB.addListener("conn", e => nativeConn(e.state));
   await nativeSnapshot();
@@ -545,7 +551,7 @@ if (cfg.demo) startDemo();
 setInterval(() => { try { render(); } catch (e) { dbgErr("render: " + e.message); } }, 200);
 try { render(); } catch (e) { dbgErr("render: " + e.message); }
 setInterval(() => {
-  $("#diag").textContent = "build 2 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
+  $("#diag").textContent = "build 3 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
     + " \u00B7 " + (S.on ? "connected" : "not connected") + " \u00B7 packets " + DBG.n
     + (DBG.n ? " (" + Math.round((Date.now() - DBG.ev) / 1000) + "s ago)" : "");
 }, 500);
