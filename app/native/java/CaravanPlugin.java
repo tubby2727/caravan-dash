@@ -85,6 +85,33 @@ public class CaravanPlugin extends Plugin {
         call.resolve(r);
     }
 
+    /** Save the controller PIN on this phone and send it now if connected. Empty string forgets it. */
+    @PluginMethod
+    public void setPin(PluginCall call) {
+        String pin = call.getString("pin", "");
+        if (pin == null) pin = "";
+        pin = pin.trim();
+        JSObject r = new JSObject();
+        if (!pin.isEmpty() && !pin.matches("\\d{4,8}")) {
+            r.put("ok", false);
+            call.resolve(r);
+            return;
+        }
+        BleService.savePin(getContext(), pin);
+        BleService s = BleService.instance;
+        if (s != null && CaravanState.connected && !pin.isEmpty()) s.sendPin();
+        r.put("ok", true);
+        call.resolve(r);
+    }
+
+    /** Whether a PIN is saved (the PIN itself is not handed back to the page). */
+    @PluginMethod
+    public void getPin(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("set", !BleService.getPin(getContext()).isEmpty());
+        call.resolve(r);
+    }
+
     /** Opens the system prompt that lets the app run in the background without being put to sleep. */
     @PluginMethod
     public void batterySettings(PluginCall call) {

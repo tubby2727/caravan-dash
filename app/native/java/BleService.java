@@ -345,6 +345,7 @@ public class BleService extends Service {
         lostSince = 0;
         writeQ.clear();
         writing = false;
+        sendPin();                        // unlock first: the controller ignores commands until it has the PIN
         sendClock();                      // lets the controller's quiet hours know the time of day
         CaravanState.lastRx = System.currentTimeMillis();
         getSystemService(NotificationManager.class).cancel(N_LINK);
@@ -437,6 +438,29 @@ public class BleService extends Service {
         } catch (Exception e) {
             Log.w(TAG, "command write failed: " + e);
         }
+    }
+
+    // ---------------------------------------------------------------- PIN
+
+    static final String PREFS = "caravan";
+
+    /** The controller PIN saved on this phone ("" = none). */
+    static String getPin(Context c) {
+        return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("pin", "");
+    }
+
+    static void savePin(Context c, String pin) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("pin", pin == null ? "" : pin).apply();
+    }
+
+    /** Send the saved PIN (opcode 0x20 + ASCII digits). Called on every connect, and when the PIN is changed. */
+    void sendPin() {
+        String p = getPin(this);
+        if (p.isEmpty() || p.length() > 19) return;
+        byte[] b = new byte[1 + p.length()];
+        b[0] = 0x20;
+        for (int i = 0; i < p.length(); i++) b[i + 1] = (byte) p.charAt(i);
+        writeBytes(b);
     }
 
     /** Tell the controller the phone's time of day (opcode 0x13: minutes, seconds). */

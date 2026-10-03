@@ -93,7 +93,10 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
 .sw:checked::after{transform:translateX(20px)}
 .srow input[type=time]{background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:17px}
 .srow input[type=range]{width:46%;accent-color:var(--acc)}
-.srow input[type=number]{width:100px;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:16px;text-align:right}
+.srow input[type=number],.srow input[type=password]{width:100px;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:16px;text-align:right}
+#pinState{display:block;margin-top:2px}
+#pinState.good{color:var(--ok)}
+#pinState.bad{color:var(--bad)}
 #cfgNote{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--tile);border:1px dashed var(--line);font-size:13px;color:var(--sec)}
 .hhead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .hhead .grow{flex:1;font-size:13px;color:var(--sec)}
@@ -190,11 +193,16 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
   <div class="chart" id="chW"></div>
   <div class="chart" id="chD"></div>
   <div class="chart" id="chB"></div>
-  <div class="note">One point every 5 minutes, kept in the controller (cleared if it loses power). Drag a finger across a graph to read it.</div>
+  <div class="note">One point every 5 minutes, kept in the controller (saved every 30 min, so a power cut shows as a short gap). Drag a finger across a graph to read it.</div>
 </section>
 
 <section id="settings">
   <div id="cfgNote" hidden></div>
+  <div class="card">
+    <h4>Controller PIN</h4>
+    <div class="gn">Needed to change settings, silence alarms or reset. Enter it once; this phone remembers it and sends it every time it connects.</div>
+    <div class="srow"><div class="sl">PIN<span class="gn" id="pinState"></span></div><input id="sPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" placeholder="••••"><button class="btn" id="btnPin">Save</button></div>
+  </div>
   <div id="cfgBody"></div>
   <div class="card">
     <h4>This phone</h4>
@@ -359,6 +367,7 @@ async function open(){
   }
   cmdCh = await svc.getCharacteristic(U.cmd);
   S.on = true; setPill("Connected", true);
+  pinSend();                                     // unlock first: the controller ignores commands until it has the PIN
   { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); sendBytes([0x13, m & 255, m >> 8, d.getSeconds()]); }
   setTimeout(reqCfg, 600);
   keepAwake();
@@ -384,7 +393,38 @@ async function sendBytes(arr){
 }
 async function sendCmd(n){
   if (cfg.demo) { demoSilence(n); return; }
+  if (!unlocked()) { setPill("Enter the PIN in Settings"); showTab("settings"); return; }
   if (!(await sendBytes([n]))) setPill("Write failed");
+}
+
+/* ---------------- PIN (v1.3 firmware) ---------------- */
+// status flags: bit3 = this phone is unlocked (or the controller has no PIN), bit4 = last PIN wrong / locked out
+const unlocked = () => cfg.demo || ((S.t.flags || 0) & 8) !== 0;
+const pinBad = () => ((S.t.flags || 0) & 16) !== 0;
+let pinSet = false;
+async function pinLoad(){
+  if (NATIVE) { try { const r = await CB.getPin(); pinSet = !!(r && r.set); } catch (_) {} }
+  else pinSet = !!cfg.pin;
+}
+function pinSend(){                              // browser mode; the Android app sends it from its own service
+  if (NATIVE || !cfg.pin) return;
+  sendBytes([0x20, ...Array.from(cfg.pin, ch => ch.charCodeAt(0))]);
+}
+function pinShow(){
+  const e = $("#pinState"); let m, c = "";
+  if (cfg.demo) m = "demo";
+  else if (S.on && unlocked()) { m = "accepted"; c = "good"; }
+  else if (S.on && pinBad()) { m = "wrong PIN (5 wrong tries locks it for 5 min)"; c = "bad"; }
+  else if (!pinSet) m = "not entered";
+  else m = S.on ? "checking…" : "saved on this phone";
+  e.textContent = m; e.className = "gn" + (c ? " " + c : "");
+}
+async function pinSave(){
+  const p = $("#sPin").value.trim();
+  if (!/^\d{4,8}$/.test(p)) { const e = $("#pinState"); e.textContent = "use 4 to 8 digits"; e.className = "gn bad"; return; }
+  if (NATIVE) { try { await CB.setPin({ pin: p }); } catch (_) {} }
+  else { cfg.pin = p; save(); pinSend(); }
+  pinSet = true; $("#sPin").value = ""; pinShow();
 }
 async function keepAwake(){
   try { if ("wakeLock" in navigator) wake = await navigator.wakeLock.request("screen"); } catch (_) {}
@@ -483,7 +523,8 @@ function render(){
 
   /* --- battery --- */
   const soc = live ? b.soc : NaN;
-  const sc_ = Number.isNaN(soc) ? COL.off : soc < 50 ? COL.bad : soc < 55 ? COL.warn : COL.ok;
+  const cv = i => CFGV[i] === undefined ? CD.def[i] : CFGV[i];      // controller settings, or factory values
+  const sc_ = Number.isNaN(soc) ? COL.off : soc < cv(0) ? COL.bad : soc < cv(1) ? COL.warn : COL.ok;
   setNum("#soc", Number.isNaN(soc) ? "--" : Math.round(soc) + "%", sc_);
   $("#ring").style.stroke = sc_;
   $("#ring").style.strokeDashoffset = 339.3 * (1 - (Number.isNaN(soc) ? 0 : Math.max(0, Math.min(100, soc)) / 100));
@@ -512,11 +553,11 @@ function render(){
   setNum("#grey", live ? (grey ? "FULL" : "OK") : "--", live ? (grey ? COL.warn : COL.ok) : COL.off);
   tint("#tGrey", live ? (grey ? COL.warn : COL.ok) : COL.off);
   const fa = live && (t.lat & 2);
-  for (const [k, id, tid] of [["wae","#wae","#tWae"],["dom","#dom","#tDom"]]) {
-    const v = live ? t[k] : NaN;
-    const c = Number.isNaN(v) ? COL.off : v > 8 ? (fa ? COL.bad : COL.warn) : COL.ok;
+  for (const [k, id, tid, ci] of [["wae","#wae","#tWae",2],["dom","#dom","#tDom",3]]) {
+    const v = live ? t[k] : NaN, lim = cv(ci) / 10;
+    const c = Number.isNaN(v) ? COL.off : v > lim ? (fa ? COL.bad : COL.warn) : COL.ok;
     setNum(id, Number.isNaN(v) ? "--" : v.toFixed(1) + "°C", c);
-    $(id + "Sub").textContent = Number.isNaN(v) ? (k === "wae" ? "not in range / no sensor" : "no data") : v > 8 ? "warm" : "OK";
+    $(id + "Sub").textContent = Number.isNaN(v) ? (k === "wae" ? "not in range / no sensor" : "no data") : v > lim ? "warm" : "OK";
     tint(tid, c);
   }
 
@@ -726,10 +767,13 @@ function cfgRefresh(){
   if (!can && !cfgAny()) msg = "Connect to the controller to read and change its settings.";
   else if (!can) msg = "Not connected. Showing the last settings seen; changes need a connection.";
   else if (!have) msg = "Reading settings from the controller…" + (cfgAsked && Date.now() - cfgAsked > 6000 ? " If this stays here, the controller firmware needs the settings update." : "");
+  else if (!unlocked()) msg = "Enter the controller PIN below to change settings.";
   note.textContent = msg; note.hidden = !msg;
+  pinShow();
+  const open = can && unlocked();
   for (const row of cfgRows) {
     const r = row._r, v = CFGV[r.i], known = v !== undefined;
-    row.classList.toggle("off", !(can && known));
+    row.classList.toggle("off", !(open && known));
     if (r.dep !== undefined) row.style.opacity = CFGV[r.dep] === 0 ? 0.5 : "";
     if (row._v && r.k !== "rng") row._v.textContent = fmtRow(r, v);
     if (r.k === "rng") { row._v.textContent = known ? v + " " + r.u : "--"; if (known && document.activeElement !== row._t) row._t.value = v; }
@@ -755,6 +799,7 @@ $("#tolP").onclick = () => { cfg.tol = Math.min(2, Math.round((cfg.tol + 0.1) * 
 let resetArm = 0;
 $("#btnReset").onclick = () => {
   const b = $("#btnReset");
+  if (!unlocked()) { setPill("Enter the PIN first"); return; }
   if (Date.now() - resetArm < 4000) {
     resetArm = 0; b.textContent = "Reset";
     if (cfg.demo) { for (let i = 0; i < 20; i++) CFGV[i] = CD.def[i]; cfgRefresh(); } else sendBytes([0x12]);
@@ -866,7 +911,10 @@ function showTab(name){
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => showTab(b.dataset.t));
 $("#btnConn").onclick = connect;
 $("#btnSet").onclick = () => showTab("settings");
+$("#btnPin").onclick = pinSave;
+$("#sPin").addEventListener("keydown", e => { if (e.key === "Enter") pinSave(); });
 buildCfg();
+pinLoad().then(pinShow);
 if (NATIVE) {
   $("#btnConn").style.display = "none";
   $("#nativeRow").hidden = false;
@@ -914,7 +962,7 @@ if (cfg.demo) startDemo();
 setInterval(() => { try { render(); } catch (e) { dbgErr("render: " + e.message); } }, 200);
 try { render(); } catch (e) { dbgErr("render: " + e.message); }
 setInterval(() => {
-  $("#diag").textContent = "build 6 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
+  $("#diag").textContent = "build 7 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
     + " \u00B7 " + (S.on ? "connected" : "not connected") + " \u00B7 packets " + DBG.n
     + (DBG.n ? " (" + Math.round((Date.now() - DBG.ev) / 1000) + "s ago)" : "");
 }, 500);
