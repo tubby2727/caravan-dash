@@ -72,6 +72,37 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
 .field input[type=number]{width:100px;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:16px;text-align:right}
 .field input[type=checkbox]{width:22px;height:22px}
 .err{color:var(--bad);font-size:14px;min-height:20px}
+
+/* settings + history */
+.card{background:var(--tile);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 6px;margin-bottom:12px}
+.card h4{margin:0 0 2px;font-size:13px;letter-spacing:.8px;text-transform:uppercase;color:var(--sec)}
+.card .gn{font-size:12px;color:var(--sec);margin:0 0 4px}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;border-top:1px solid var(--line)}
+.card h4+.srow,.card .gn+.srow{border-top:0}
+.srow .sl{flex:1;font-size:15px;line-height:1.25}
+.srow .ok{color:var(--ok);font-size:13px;margin-left:6px;opacity:0;transition:opacity .4s}
+.srow .ok.on{opacity:1}
+.srow.off{opacity:.4;pointer-events:none}
+.stp{display:flex;align-items:center;gap:6px}
+.stp button{width:40px;height:40px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:22px;font-weight:700;touch-action:manipulation}
+.stp button:active{background:var(--line)}
+.stp .sv{min-width:78px;text-align:center;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.sw{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:99px;background:var(--line);position:relative;transition:background .2s;flex:none;margin:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw:checked{background:var(--ok)}
+.sw:checked::after{transform:translateX(20px)}
+.srow input[type=time]{background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:17px}
+.srow input[type=range]{width:46%;accent-color:var(--acc)}
+.srow input[type=number]{width:100px;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:16px;text-align:right}
+#cfgNote{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--tile);border:1px dashed var(--line);font-size:13px;color:var(--sec)}
+.hhead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.hhead .grow{flex:1;font-size:13px;color:var(--sec)}
+.chart{background:var(--tile);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 8px;margin-bottom:12px}
+.chart .ct{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.chart .ct b{font-size:15px}
+.chart .cs{font-size:12px;color:var(--sec);font-variant-numeric:tabular-nums}
+.chart .tip{min-height:18px;font-size:13px;font-weight:600;color:var(--txt);margin-top:4px;font-variant-numeric:tabular-nums}
+.chart svg{width:100%;height:auto;display:block;touch-action:pan-y}
 </style>
 </head>
 <body>
@@ -90,6 +121,8 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
 <nav class="tabs">
   <button data-t="dash" class="on">Dash</button>
   <button data-t="level">Level</button>
+  <button data-t="history">History</button>
+  <button data-t="settings">Settings</button>
 </nav>
 
 <main>
@@ -149,6 +182,35 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
     <div class="note">Bubble moves to the high side, like a real level. Top of screen = front of van.</div>
   </div>
 </section>
+<section id="history">
+  <div class="hhead">
+    <div class="grow" id="hStat">Last 24 hours</div>
+    <button class="btn ghost" id="btnHist">Refresh</button>
+  </div>
+  <div class="chart" id="chW"></div>
+  <div class="chart" id="chD"></div>
+  <div class="chart" id="chB"></div>
+  <div class="note">One point every 5 minutes, kept in the controller (cleared if it loses power). Drag a finger across a graph to read it.</div>
+</section>
+
+<section id="settings">
+  <div id="cfgNote" hidden></div>
+  <div id="cfgBody"></div>
+  <div class="card">
+    <h4>This phone</h4>
+    <div class="gn">Only stored in this app, not on the controller.</div>
+    <div class="srow"><div class="sl">Wheel track (mm)<br><span class="gn">for the "raise this much" hints</span></div><input id="sTrack" type="number" min="500" max="4000" step="50"></div>
+    <div class="srow"><div class="sl">Hitch to axle (mm)</div><input id="sHitch" type="number" min="1000" max="9000" step="100"></div>
+    <div class="srow"><div class="sl">Level tolerance</div><div class="stp"><button id="tolM">&minus;</button><span class="sv" id="tolV">0.5°</span><button id="tolP">+</button></div></div>
+    <div class="srow"><div class="sl">Beep / vibrate in the page</div><input id="sSound" type="checkbox" class="sw"></div>
+    <div class="srow"><div class="sl">Demo data (no controller)</div><input id="sDemo" type="checkbox" class="sw"></div>
+    <div class="srow" id="nativeRow" hidden><div class="sl">Keep running in the background</div><button class="btn ghost" id="btnBatt">Allow</button></div>
+  </div>
+  <div class="card">
+    <h4>Controller</h4>
+    <div class="srow"><div class="sl">Reset every setting to the factory values</div><button class="btn ghost" id="btnReset">Reset</button></div>
+  </div>
+</section>
 </main>
 
 <dialog id="cal">
@@ -161,16 +223,6 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
   </div>
 </dialog>
 
-<dialog id="set">
-  <h3>Settings</h3>
-  <p>Used for the "raise this much" hints on the Level page. Approximate is fine.</p>
-  <div class="field"><label for="sTrack">Wheel track (mm)</label><input id="sTrack" type="number" min="500" max="4000" step="50"></div>
-  <div class="field"><label for="sHitch">Hitch to axle (mm)</label><input id="sHitch" type="number" min="1000" max="9000" step="100"></div>
-  <div class="field"><label for="sSound">Beep / vibrate</label><input id="sSound" type="checkbox"></div>
-  <div class="field"><label for="sDemo">Demo data (no controller)</label><input id="sDemo" type="checkbox"></div>
-  <div class="row" id="nativeRow" hidden><button class="btn ghost" id="btnBatt">Allow background running</button></div>
-  <div class="row"><button class="btn" id="setOk">Done</button></div>
-</dialog>
 
 <script>
 "use strict";
@@ -183,6 +235,8 @@ window.addEventListener("error", e => dbgErr((e.message || "error") + " (line " 
 window.addEventListener("unhandledrejection", e => dbgErr("Promise: " + ((e.reason && e.reason.message) || e.reason)));
 /* ---------------- BLE protocol (matches caravan_ble.yaml) ---------------- */
 const U = {
+  cfg:    "c0a7a5e0-0007-4c1b-9f6e-5a1d0c4a0001",
+  hist:   "c0a7a5e0-0008-4c1b-9f6e-5a1d0c4a0001",
   svc:    "c0a7a5e0-0001-4c1b-9f6e-5a1d0c4a0001",
   level:  "c0a7a5e0-0002-4c1b-9f6e-5a1d0c4a0001",
   batt:   "c0a7a5e0-0003-4c1b-9f6e-5a1d0c4a0001",
@@ -191,9 +245,9 @@ const U = {
   cmd:    "c0a7a5e0-0006-4c1b-9f6e-5a1d0c4a0001",
 };
 const NA = 0x7FFF;
-const ALARMS = ["BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER"];
-const SHORT = ["Batt critical", "Fridge", "Batt low", "Grey water"];
-const BEEPS = [4, 6, 2, 1];
+const ALARMS = ["BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER", "SENSOR LOST"];
+const SHORT = ["Batt critical", "Fridge", "Batt low", "Grey water", "Sensor"];
+const BEEPS = [4, 6, 2, 1, 3];
 const MPPT = {0:"Off",2:"Bulk",3:"Absorb",4:"Float",5:"Equalise",6:"Fault"};
 
 const $ = s => document.querySelector(s);
@@ -201,8 +255,10 @@ const sc = (v, k) => v === NA ? NaN : v / k;
 const fmt = (v, d, u) => Number.isNaN(v) || v === undefined ? "--" : v.toFixed(d) + (u || "");
 
 /* ---------------- state ---------------- */
-const S = { on:false, lastRx:0, a:null, buf:[], b:{}, s:{}, t:{}, shown:-1 };
-const cfg = Object.assign({ track:2000, hitch:4000, sound:true, demo:false, cal:null },
+const S = { on:false, lastRx:0, a:null, buf:[],
+  b:{soc:NaN,v:NaN,i:NaN,ah:NaN,ttg:NaN}, s:{w:NaN,a:NaN,y:NaN,st:0},
+  t:{wae:NaN,dom:NaN,flags:0,lat:0,sil:0,shown:-1}, shown:-1 };
+const cfg = Object.assign({ track:2000, hitch:4000, sound:true, demo:false, cal:null, tol:0.5 },
   JSON.parse(localStorage.getItem("cv") || "{}"));
 if (new URLSearchParams(location.search).has("demo")) cfg.demo = true;
 const save = () => localStorage.setItem("cv", JSON.stringify(cfg));
@@ -224,7 +280,29 @@ const dec = {
   },
   status(dv){
     const g = o => dv.getInt16(o, true);
-    S.t = { wae:sc(g(0),10), dom:sc(g(2),10), flags:dv.getUint8(4), lat:dv.getUint8(5), sil:dv.getUint8(6), shown:dv.getInt8(7) };
+    S.t = { wae:sc(g(0),10), dom:sc(g(2),10), flags:dv.getUint8(4), lat:dv.getUint8(5), sil:dv.getUint8(6), shown:dv.getInt8(7), quiet:(dv.getUint8(4) & 4) !== 0 };
+  },
+  cfg(dv){
+    const i = dv.getUint8(0), v = dv.getInt16(1, true);
+    if (i >= CFGV.length || pendT[i]) return;            // ignore echoes while the user is still tapping
+    CFGV[i] = v; savedAt[i] = Date.now(); cfgRefresh();
+  },
+  hist(dv){
+    const b0 = dv.getUint8(0);
+    if (b0 === 0xFE) {
+      const count = dv.getUint16(1, true);
+      HB = { count, interval: dv.getUint8(3) || 5, age: dv.getUint16(4, true), t: Date.now(), got: 0, series: [0, 1, 2].map(() => new Array(count).fill(NaN)) };
+      if (count === 0) histDone();
+      return;
+    }
+    if (!HB || b0 > 2) return;
+    const off = dv.getUint16(1, true), n = dv.getUint8(3);
+    for (let j = 0; j < n; j++) {
+      if (off + j >= HB.count) break;
+      const raw = dv.getInt16(4 + 2 * j, true);
+      HB.series[b0][off + j] = raw === NA ? NaN : raw / 10; HB.got++;
+    }
+    if (HB.got >= HB.count * 3) histDone();
   },
 };
 
@@ -235,14 +313,14 @@ const CB = !NATIVE ? null
   : (typeof Capacitor.registerPlugin === "function" ? Capacitor.registerPlugin("CaravanBle")
   : (Capacitor.Plugins && Capacitor.Plugins.CaravanBle) || null);
 if (NATIVE && !CB) dbgErr("CaravanBle plugin not found in Capacitor.Plugins");
-const KEYS = ["level", "batt", "solar", "status"];
+const KEYS = ["level", "batt", "solar", "status", "cfg", "hist"];
 const CONNTXT = { connected:"Connected", searching:"Searching…", connecting:"Connecting…", noperm:"Allow Bluetooth", "bt off":"Bluetooth off" };
 function b64dv(b){ const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new DataView(u.buffer); }
-function nativePacket(i, b){ if (!b || !KEYS[i]) return; dec[KEYS[i]](b64dv(b)); S.lastRx = Date.now(); DBG.n++; DBG.ev = Date.now(); }
-function nativeConn(st){ S.on = st === "connected"; setPill(CONNTXT[st] || st, S.on); }
+function nativePacket(i, b){ if (!b || !KEYS[i]) return; dec[KEYS[i]](b64dv(b)); if (i < 4) S.lastRx = Date.now(); DBG.n++; DBG.ev = Date.now(); }
+function nativeConn(st){ const was = S.on; S.on = st === "connected"; setPill(CONNTXT[st] || st, S.on); if (S.on && !was) setTimeout(reqCfg, 900); }
 async function nativeSnapshot(){
   if (!CB) return;
-  try { const r = await CB.snapshot(); for (let i = 0; i < 4; i++) nativePacket(i, r["p" + i]); nativeConn(r.state); } catch (_) {}
+  try { const r = await CB.snapshot(); for (let i = 0; i < 4; i++) nativePacket(i, r["p" + i]); if (r.cfg) r.cfg.forEach((v, i) => { if (v !== null && v !== undefined && CFGV[i] === undefined) CFGV[i] = v; }); nativeConn(r.state); } catch (_) {}
 }
 async function nativeInit(){
   if (!CB) return;
@@ -272,8 +350,17 @@ async function open(){
     await ch.startNotifications();
     try { dec[k](await ch.readValue()); S.lastRx = Date.now(); } catch (_) {}
   }
+  for (const k of ["cfg", "hist"]) {            // newer firmware only
+    try {
+      const ch = await svc.getCharacteristic(U[k]);
+      ch.addEventListener("characteristicvaluechanged", e => dec[k](e.target.value));
+      await ch.startNotifications();
+    } catch (_) {}
+  }
   cmdCh = await svc.getCharacteristic(U.cmd);
   S.on = true; setPill("Connected", true);
+  { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); sendBytes([0x13, m & 255, m >> 8, d.getSeconds()]); }
+  setTimeout(reqCfg, 600);
   keepAwake();
 }
 function onDisc(){
@@ -285,11 +372,19 @@ function onDisc(){
   };
   setTimeout(retry, 1500);
 }
+let wq = Promise.resolve();
+async function sendBytes(arr){
+  if (cfg.demo) return true;
+  if (NATIVE) {
+    try { const r = await CB.write({ b: btoa(String.fromCharCode.apply(null, arr)) }); return !!(r && r.ok); } catch (_) { return false; }
+  }
+  if (!cmdCh) return false;
+  wq = wq.then(() => cmdCh && cmdCh.writeValueWithResponse(new Uint8Array(arr))).catch(() => {});   // one write at a time
+  return true;
+}
 async function sendCmd(n){
   if (cfg.demo) { demoSilence(n); return; }
-  if (NATIVE) { try { await CB.command({ cmd: n }); } catch (_) { setPill("Write failed"); } return; }
-  if (!cmdCh) return;
-  try { await cmdCh.writeValueWithResponse(new Uint8Array([n])); } catch (e) { setPill("Write failed"); }
+  if (!(await sendBytes([n]))) setPill("Write failed");
 }
 async function keepAwake(){
   try { if ("wakeLock" in navigator) wake = await navigator.wakeLock.request("screen"); } catch (_) {}
@@ -434,27 +529,27 @@ function renderBanner(live){
   btns.innerHTML = "";
   if (!live) { el.className = "off"; txt.textContent = S.on ? "No data" : "Not connected"; return; }
   const sounding = t.lat & ~t.sil;
-  let top = -1; for (let k = 0; k < 4; k++) if (sounding & (1 << k)) { top = k; break; }
+  let top = -1; for (let k = 0; k < 5; k++) if (sounding & (1 << k)) { top = k; break; }
   if (top >= 0) {
     el.className = "alarm"; txt.textContent = ALARMS[top];
     for (const [lbl, n] of [["30 min", 1], ["Until cleared", 2]]) {
       const bt = document.createElement("button"); bt.textContent = lbl; bt.onclick = () => sendCmd(n); btns.appendChild(bt);
     }
   } else if (t.lat) {
-    const names = []; for (let k = 0; k < 4; k++) if (t.lat & (1 << k)) names.push(SHORT[k]);
+    const names = []; for (let k = 0; k < 5; k++) if (t.lat & (1 << k)) names.push(SHORT[k]);
     el.className = "mute"; txt.textContent = "SILENCED: " + names.join(", ");
   } else if (Number.isNaN(S.b.soc)) {
     el.className = "warn"; txt.textContent = "SENSOR LOST: SHUNT";
-  } else { el.className = ""; txt.textContent = "ALL OK"; }
+  } else { el.className = ""; txt.textContent = t.quiet ? "ALL OK \u00B7 quiet hours" : "ALL OK"; }
   if (top !== lastShown) { if (top >= 0 && !NATIVE) beeps(BEEPS[top]); lastShown = top; }
 }
 
 function renderLevel(live){
-  const need = !cfg.cal;
+  const need = !cfg.cal, tol = cfg.tol || 0.5;
   $("#needcal").hidden = !need;
   $("#bubble").style.display = need ? "none" : "";
   const att = need || !live ? null : attitude();
-  const col = v => Math.abs(v) <= 0.5 ? COL.ok : Math.abs(v) <= 3 ? COL.warn : COL.bad;
+  const col = v => Math.abs(v) <= tol ? COL.ok : Math.abs(v) <= 3 ? COL.warn : COL.bad;
   if (!att) {
     setNum("#roll", "--", COL.off); setNum("#pitch", "--", COL.off);
     $("#rollW").textContent = $("#pitchW").textContent = ""; $("#hint").textContent = need ? "" : "Waiting for sensor…";
@@ -464,8 +559,8 @@ function renderLevel(live){
   const { roll, pitch } = att;
   setNum("#roll", Math.abs(roll).toFixed(1) + "°", col(roll));
   setNum("#pitch", Math.abs(pitch).toFixed(1) + "°", col(pitch));
-  $("#rollW").textContent = Math.abs(roll) <= 0.5 ? "LEVEL" : roll > 0 ? "RIGHT LOW" : "LEFT LOW";
-  $("#pitchW").textContent = Math.abs(pitch) <= 0.5 ? "LEVEL" : pitch > 0 ? "NOSE HIGH" : "NOSE LOW";
+  $("#rollW").textContent = Math.abs(roll) <= tol ? "LEVEL" : roll > 0 ? "RIGHT LOW" : "LEFT LOW";
+  $("#pitchW").textContent = Math.abs(pitch) <= tol ? "LEVEL" : pitch > 0 ? "NOSE HIGH" : "NOSE LOW";
   $("#rollW").style.color = col(roll); $("#pitchW").style.color = col(pitch);
   tint("#tRoll", col(roll)); tint("#tPitch", col(pitch));
 
@@ -475,43 +570,282 @@ function renderLevel(live){
   const bubble = $("#bub");
   bubble.setAttribute("cx", bx.toFixed(1)); bubble.setAttribute("cy", by.toFixed(1));
   const worst = Math.max(Math.abs(roll), Math.abs(pitch));
-  bubble.setAttribute("fill", worst <= 0.5 ? COL.ok : worst <= 3 ? COL.warn : COL.bad);
+  bubble.setAttribute("fill", worst <= tol ? COL.ok : worst <= 3 ? COL.warn : COL.bad);
 
   /* how much to lift: wheel track for roll, hitch-to-axle for pitch */
   const rollMm = Math.round(Math.tan(Math.abs(roll) * Math.PI / 180) * cfg.track / 5) * 5;
   const pitchMm = Math.round(Math.tan(Math.abs(pitch) * Math.PI / 180) * cfg.hitch / 5) * 5;
   const parts = [];
-  if (Math.abs(roll) > 0.5) parts.push(`Raise ${roll > 0 ? "RIGHT" : "LEFT"} ≈ ${rollMm} mm`);
-  if (Math.abs(pitch) > 0.5) parts.push(`${pitch > 0 ? "Lower" : "Raise"} nose ≈ ${pitchMm} mm`);
+  if (Math.abs(roll) > tol) parts.push(`Raise ${roll > 0 ? "RIGHT" : "LEFT"} ≈ ${rollMm} mm`);
+  if (Math.abs(pitch) > tol) parts.push(`${pitch > 0 ? "Lower" : "Raise"} nose ≈ ${pitchMm} mm`);
   $("#hint").textContent = parts.length ? parts.join("  ·  ") : "LEVEL ✓";
   $("#hint").style.color = parts.length ? "var(--txt)" : "var(--ok)";
 
   /* level chime: both axes within 0.5° for 3 s */
-  if (worst <= 0.5) {
+  if (worst <= tol) {
     if (!levelSince) levelSince = Date.now();
     if (!chimed && Date.now() - levelSince > 3000) { chime(); chimed = true; }
   } else { levelSince = 0; if (worst > 1.0) chimed = false; }
 }
 
-/* ---------------- tabs / settings ---------------- */
-document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
-  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
-  document.querySelectorAll("main section").forEach(sx => sx.classList.toggle("on", sx.id === b.dataset.t));
-});
+/* ---------------- controller settings (stored on the controller) ---------------- */
+const CD = {
+  def: [50, 55, 80, 80, 20, 10, 30, 31, 1, 10, 30, 120, 2, 0, 1320, 360, 1, 5, 11, 100],
+  min: [10, 15, -50, -50, 1, 0, 1, 0, 0, 0, 5, 10, 1, 0, 0, 0, 0, 1, 0, 10],
+  max: [90, 95, 250, 250, 180, 180, 240, 31, 1, 300, 900, 3600, 50, 1, 1439, 1439, 1, 120, 15, 100],
+};
+const GROUPS = [
+  { t: "Battery alarms", n: "Each one clears 3 points above its level.", rows: [
+    { k: "stp", i: 0, l: "Critical below", u: "%", step: 1 },
+    { k: "stp", i: 1, l: "Low below", u: "%", step: 1 } ] },
+  { t: "Fridges", rows: [
+    { k: "stp", i: 2, l: "Waeco warm above", u: "°C", s: 10, step: 5 },
+    { k: "stp", i: 3, l: "Dometic warm above", u: "°C", s: 10, step: 5 },
+    { k: "stp", i: 4, l: "Alarm after it stays warm for", u: "min", step: 1 } ] },
+  { t: "Grey water", rows: [
+    { k: "stp", i: 5, l: "Clear after the float is open for", u: "min", step: 1 } ] },
+  { t: "Which alarms are on", rows: [
+    { k: "bit", i: 7, b: 0, l: "Battery critical" }, { k: "bit", i: 7, b: 1, l: "Fridge warm" },
+    { k: "bit", i: 7, b: 2, l: "Battery low" }, { k: "bit", i: 7, b: 3, l: "Grey water full" },
+    { k: "bit", i: 7, b: 4, l: "Sensor lost" } ] },
+  { t: "Silencing and sound", rows: [
+    { k: "stp", i: 6, l: "Silence lasts", u: "min", step: 5 },
+    { k: "tog", i: 8, l: "Buzzer on the controller" } ] },
+  { t: "Sensor lost", n: "Raises an alarm if a sensor you have switched on stops reporting.", rows: [
+    { k: "stp", i: 17, l: "Alarm after it is silent for", u: "min", step: 1 },
+    { k: "bit", i: 18, b: 0, l: "Watch the battery shunt" }, { k: "bit", i: 18, b: 1, l: "Watch the solar controller" },
+    { k: "bit", i: 18, b: 2, l: "Watch the Waeco probe" }, { k: "bit", i: 18, b: 3, l: "Watch the Dometic probe" } ] },
+  { t: "Screen on the controller", rows: [
+    { k: "rng", i: 19, l: "Brightness", u: "%", min: 10, max: 100, step: 5 },
+    { k: "stp", i: 12, l: "Dimmed brightness", u: "%", step: 1 },
+    { k: "stp", i: 9, l: "Back to Home after", f: "dur", step: 5 },
+    { k: "stp", i: 10, l: "Dim after", f: "dur", step: 5 },
+    { k: "stp", i: 11, l: "Sleep after", f: "dur", step: 10 } ] },
+  { t: "Quiet hours", n: "No buzzer and the screen stays asleep. Needs the phone connected once after power-up to set the time. Phone notifications are not affected.", rows: [
+    { k: "tog", i: 13, l: "Quiet hours" },
+    { k: "time", i: 14, l: "From", dep: 13 }, { k: "time", i: 15, l: "Until", dep: 13 },
+    { k: "tog", i: 16, l: "Critical battery still sounds", dep: 13 } ] },
+];
+const CFGV = new Array(20).fill(undefined);
+const cfgRows = [], pendT = {}, savedAt = {};
+let cfgAsked = 0, histSince = 0;
+const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+const fmtMin = m => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+function fmtDur(s){ if (s === 0) return "Never"; if (s >= 3600 && s % 3600 === 0) return (s / 3600) + " h"; if (s >= 60 && s % 60 === 0) return (s / 60) + " min"; return s + " s"; }
+function fmtRow(r, v){
+  if (v === undefined) return "--";
+  if (r.f === "dur") return fmtDur(v);
+  if (r.s) return (v / r.s).toFixed(1) + " " + r.u;
+  return v + " " + r.u;
+}
+const cfgAll = () => CFGV.every(v => v !== undefined);
+const cfgAny = () => CFGV.some(v => v !== undefined);
+
+function cfgSet(i, v){
+  v = Math.max(CD.min[i], Math.min(CD.max[i], Math.round(v)));
+  CFGV[i] = v; cfgRefresh();
+  clearTimeout(pendT[i]);
+  pendT[i] = setTimeout(() => { delete pendT[i]; sendBytes([0x11, i, v & 0xFF, (v >> 8) & 0xFF]); }, 350);
+}
+function reqCfg(){ cfgAsked = Date.now(); sendBytes([0x10]); }
+
+function hold(btn, fn){
+  let t, iv, n = 0;
+  const stop = () => { clearTimeout(t); clearInterval(iv); };
+  btn.addEventListener("pointerdown", e => {
+    e.preventDefault(); stop(); n = 0; fn(1);
+    t = setTimeout(() => { iv = setInterval(() => { n++; fn(n > 25 ? 10 : n > 10 ? 5 : 1); }, 110); }, 450);
+  });
+  for (const ev of ["pointerup", "pointerleave", "pointercancel"]) btn.addEventListener(ev, stop);
+}
+
+function buildCfg(){
+  const root = $("#cfgBody");
+  for (const g of GROUPS) {
+    const card = el("div", "card");
+    card.appendChild(el("h4", "", g.t));
+    if (g.n) card.appendChild(el("div", "gn", g.n));
+    for (const r of g.rows) {
+      const row = el("div", "srow"); row._r = r;
+      const lab = el("div", "sl", r.l); row._ok = el("span", "ok", "✓"); lab.appendChild(row._ok);
+      row.appendChild(lab);
+      if (r.k === "stp") {
+        const ctl = el("div", "stp"), m = el("button", "", "−"), p = el("button", "", "+");
+        row._v = el("span", "sv", "--");
+        const bump = (dir, mult) => { const v = CFGV[r.i]; if (v !== undefined) cfgSet(r.i, v + dir * r.step * mult); };
+        hold(m, mult => bump(-1, mult)); hold(p, mult => bump(1, mult));
+        ctl.append(m, row._v, p); row.appendChild(ctl);
+      } else if (r.k === "tog" || r.k === "bit") {
+        const cb = el("input"); cb.type = "checkbox"; cb.className = "sw"; row._cb = cb;
+        cb.onchange = () => {
+          const v = CFGV[r.i]; if (v === undefined) { cb.checked = !cb.checked; return; }
+          cfgSet(r.i, r.k === "bit" ? (cb.checked ? v | (1 << r.b) : v & ~(1 << r.b)) : (cb.checked ? 1 : 0));
+        };
+        row.appendChild(cb);
+      } else if (r.k === "time") {
+        const inp = el("input"); inp.type = "time"; row._t = inp;
+        inp.onchange = () => { const m = /^(\d\d):(\d\d)/.exec(inp.value); if (m) cfgSet(r.i, +m[1] * 60 + +m[2]); };
+        row.appendChild(inp);
+      } else if (r.k === "rng") {
+        const box = el("div", "stp"), inp = el("input"); inp.type = "range"; inp.min = r.min; inp.max = r.max; inp.step = r.step;
+        inp.style.width = "130px"; row._v = el("span", "sv", "--"); row._v.style.minWidth = "52px"; row._t = inp;
+        inp.oninput = () => { row._v.textContent = inp.value + " " + r.u; cfgSet(r.i, +inp.value); };
+        box.append(inp, row._v); row.appendChild(box);
+      }
+      card.appendChild(row); cfgRows.push(row);
+    }
+    root.appendChild(card);
+  }
+}
+
+function cfgRefresh(){
+  const can = !!(S.on || cfg.demo), have = cfgAll();
+  const note = $("#cfgNote");
+  let msg = "";
+  if (!can && !cfgAny()) msg = "Connect to the controller to read and change its settings.";
+  else if (!can) msg = "Not connected. Showing the last settings seen; changes need a connection.";
+  else if (!have) msg = "Reading settings from the controller…" + (cfgAsked && Date.now() - cfgAsked > 6000 ? " If this stays here, the controller firmware needs the settings update." : "");
+  note.textContent = msg; note.hidden = !msg;
+  for (const row of cfgRows) {
+    const r = row._r, v = CFGV[r.i], known = v !== undefined;
+    row.classList.toggle("off", !(can && known));
+    if (r.dep !== undefined) row.style.opacity = CFGV[r.dep] === 0 ? 0.5 : "";
+    if (row._v && r.k !== "rng") row._v.textContent = fmtRow(r, v);
+    if (r.k === "rng") { row._v.textContent = known ? v + " " + r.u : "--"; if (known && document.activeElement !== row._t) row._t.value = v; }
+    if (row._cb) row._cb.checked = known && (r.k === "bit" ? (v & (1 << r.b)) !== 0 : v !== 0);
+    if (r.k === "time" && known && document.activeElement !== row._t) row._t.value = fmtMin(v);
+    row._ok.classList.toggle("on", !!savedAt[r.i] && Date.now() - savedAt[r.i] < 1600);
+  }
+}
+setInterval(() => { if ($("#settings").classList.contains("on")) cfgRefresh(); }, 500);
+
+/* phone-only settings */
+$("#sTrack").onchange = () => { cfg.track = +$("#sTrack").value || 2000; save(); };
+$("#sHitch").onchange = () => { cfg.hitch = +$("#sHitch").value || 4000; save(); };
+$("#sSound").onchange = () => { cfg.sound = $("#sSound").checked; save(); };
+$("#sDemo").onchange = () => {
+  const was = cfg.demo; cfg.demo = $("#sDemo").checked; save();
+  if (cfg.demo && !was) startDemo();
+  if (!cfg.demo && was) { stopDemo(); setPill("Offline"); }
+};
+const tolShow = () => { $("#tolV").textContent = cfg.tol.toFixed(1) + "°"; };
+$("#tolM").onclick = () => { cfg.tol = Math.max(0.1, Math.round((cfg.tol - 0.1) * 10) / 10); save(); tolShow(); };
+$("#tolP").onclick = () => { cfg.tol = Math.min(2, Math.round((cfg.tol + 0.1) * 10) / 10); save(); tolShow(); };
+let resetArm = 0;
+$("#btnReset").onclick = () => {
+  const b = $("#btnReset");
+  if (Date.now() - resetArm < 4000) {
+    resetArm = 0; b.textContent = "Reset";
+    if (cfg.demo) { for (let i = 0; i < 20; i++) CFGV[i] = CD.def[i]; cfgRefresh(); } else sendBytes([0x12]);
+  } else { resetArm = Date.now(); b.textContent = "Tap again"; setTimeout(() => { if (Date.now() - resetArm >= 3900) { resetArm = 0; b.textContent = "Reset"; } }, 4100); }
+};
+
+/* ---------------- history graphs ---------------- */
+let HIST = null, HB = null, histTimer = 0;
+try {
+  const j = JSON.parse(localStorage.getItem("ch") || "null");
+  if (j && j.series) { j.series = j.series.map(a => a.map(v => v === null ? NaN : v)); HIST = j; }
+} catch (_) {}
+
+function histRequest(){
+  histSince = Date.now(); HB = null;
+  sendBytes([0x14]);
+  clearTimeout(histTimer);
+  histTimer = setTimeout(() => { if (HB) histDone(); else histRender(); }, 12000);
+  histRender();
+}
+function histDone(){
+  if (!HB) return;
+  clearTimeout(histTimer);
+  HIST = { count: HB.count, interval: HB.interval, newest: HB.t - (HB.age === 0xFFFF ? 0 : HB.age * 1000), series: HB.series, fetched: HB.t };
+  HB = null;
+  try { localStorage.setItem("ch", JSON.stringify(HIST)); } catch (_) {}
+  histRender();
+}
+const hh = t => { const d = new Date(t); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+
+function chartSvg(vals, tEnd, stepMs, lines, fixedMax){
+  const W = 340, H = 150, L = 34, R = 8, T = 8, B = 20, span = 24 * 3600 * 1000, t0 = tEnd - span;
+  const fin = vals.filter(Number.isFinite);
+  if (!fin.length) return `<svg viewBox="0 0 ${W} ${H}"><text x="${W / 2}" y="${H / 2}" text-anchor="middle" fill="#8A96A3" font-size="13">No data yet</text></svg>`;
+  let lo = Math.min(...fin, ...lines.map(l => l.y)), hi = Math.max(...fin, ...lines.map(l => l.y));
+  if (hi - lo < 4) { const m = (hi + lo) / 2; lo = m - 2; hi = m + 2; }
+  const pad = (hi - lo) * 0.12; lo -= pad; hi += pad;
+  if (fixedMax !== undefined) hi = Math.max(hi, fixedMax);
+  const rawStep = (hi - lo) / 4, mag = Math.pow(10, Math.floor(Math.log10(rawStep))), nice = [1, 2, 2.5, 5, 10].find(f => f * mag >= rawStep) * mag;
+  const x = t => L + (t - t0) / span * (W - L - R), y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  let s = `<svg viewBox="0 0 ${W} ${H}" data-t0="${t0}" data-span="${span}">`;
+  for (let g = Math.ceil(lo / nice) * nice; g <= hi; g += nice) {
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(g).toFixed(1)}" y2="${y(g).toFixed(1)}" stroke="#232C37"/><text x="${L - 4}" y="${(y(g) + 4).toFixed(1)}" text-anchor="end" fill="#8A96A3" font-size="10">${+g.toFixed(1)}</text>`;
+  }
+  const d = new Date(t0); d.setMinutes(0, 0, 0); d.setHours(d.getHours() + 1);
+  while (d.getHours() % 4) d.setHours(d.getHours() + 1);
+  for (let t = d.getTime(); t <= tEnd; t += 4 * 3600 * 1000) {
+    s += `<line x1="${x(t).toFixed(1)}" x2="${x(t).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="#1b232d"/><text x="${x(t).toFixed(1)}" y="${H - 6}" text-anchor="middle" fill="#8A96A3" font-size="10">${hh(t)}</text>`;
+  }
+  for (const l of lines) s += `<line x1="${L}" x2="${W - R}" y1="${y(l.y).toFixed(1)}" y2="${y(l.y).toFixed(1)}" stroke="${l.c}" stroke-dasharray="5 4" stroke-width="1.3"/>`;
+  let path = "", pen = false;
+  vals.forEach((v, i) => {
+    if (!Number.isFinite(v)) { pen = false; return; }
+    const px = x(tEnd - (vals.length - 1 - i) * stepMs).toFixed(1), py = y(v).toFixed(1);
+    path += (pen ? "L" : "M") + px + " " + py; pen = true;
+  });
+  s += `<path d="${path}" fill="none" stroke="#4AA3FF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += `<line class="cur" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#F2F5F8" stroke-width="1" opacity="0"/></svg>`;
+  return s;
+}
+
+function chartCard(box, title, unit, vals, tEnd, stepMs, lines, fixedMax){
+  const fin = vals.filter(Number.isFinite), last = fin.length ? vals.slice().reverse().find(Number.isFinite) : NaN;
+  const f = v => Number.isFinite(v) ? v.toFixed(1) + unit : "--";
+  box.innerHTML = `<div class="ct"><b>${title}</b><span class="cs">now ${f(last)} · min ${f(Math.min(...fin))} · max ${f(Math.max(...fin))}</span></div><div class="tip">&nbsp;</div>` + chartSvg(vals, tEnd, stepMs, lines, fixedMax);
+  const svg = box.querySelector("svg"), tip = box.querySelector(".tip"), cur = svg.querySelector(".cur");
+  if (!cur) return;
+  const t0 = +svg.dataset.t0, span = +svg.dataset.span;
+  const move = ev => {
+    const r = svg.getBoundingClientRect(), vx = (ev.clientX - r.left) / r.width * 340;
+    const t = t0 + (vx - 34) / (340 - 34 - 8) * span;
+    const i = vals.length - 1 - Math.round((tEnd - t) / stepMs);
+    if (i < 0 || i >= vals.length) { tip.innerHTML = "&nbsp;"; cur.setAttribute("opacity", 0); return; }
+    const tt = tEnd - (vals.length - 1 - i) * stepMs, cx = 34 + (tt - t0) / span * (340 - 34 - 8);
+    cur.setAttribute("x1", cx); cur.setAttribute("x2", cx); cur.setAttribute("opacity", 0.6);
+    tip.textContent = hh(tt) + "   " + (Number.isFinite(vals[i]) ? vals[i].toFixed(1) + unit : "no reading");
+  };
+  svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move);
+}
+
+function histRender(){
+  const st = $("#hStat"), can = !!(S.on || cfg.demo);
+  if (HB) st.textContent = "Loading from the controller…";
+  else if (HIST) st.textContent = (can ? "Updated " : "Saved copy from ") + hh(HIST.fetched) + " · last 24 h";
+  else st.textContent = can ? "Asking the controller…" : "Connect to see the graphs";
+  const H = HIST || { series: [[], [], []], newest: Date.now(), interval: 5 }, step = (H.interval || 5) * 60000;
+  const w = CFGV[2] === undefined ? 8 : CFGV[2] / 10, d = CFGV[3] === undefined ? 8 : CFGV[3] / 10;
+  const crit = CFGV[0] === undefined ? 50 : CFGV[0], low = CFGV[1] === undefined ? 55 : CFGV[1];
+  chartCard($("#chW"), "Waeco", "°C", H.series[0], H.newest, step, [{ y: w, c: "#FBBF24" }]);
+  chartCard($("#chD"), "Dometic", "°C", H.series[1], H.newest, step, [{ y: d, c: "#FBBF24" }]);
+  chartCard($("#chB"), "Battery", "%", H.series[2], H.newest, step, [{ y: crit, c: "#F87171" }, { y: low, c: "#FBBF24" }], 100);
+}
+$("#btnHist").onclick = () => { if (S.on || cfg.demo) histRequest(); else histRender(); };
+setInterval(() => { if ($("#history").classList.contains("on") && S.on && !HB && Date.now() - histSince > 5 * 60000) histRequest(); }, 20000);
+
+function showTab(name){
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x.dataset.t === name));
+  document.querySelectorAll("main section").forEach(sx => sx.classList.toggle("on", sx.id === name));
+  if (name === "settings") {
+    $("#sTrack").value = cfg.track; $("#sHitch").value = cfg.hitch; $("#sSound").checked = cfg.sound; $("#sDemo").checked = cfg.demo; tolShow();
+    if (S.on && !cfgAll() && Date.now() - cfgAsked > 3000) reqCfg();
+    cfgRefresh();
+  }
+  if (name === "history") {
+    if ((S.on || cfg.demo) && (!HIST || Date.now() - histSince > 120000)) histRequest(); else histRender();
+  }
+}
+
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => showTab(b.dataset.t));
 $("#btnConn").onclick = connect;
-$("#btnSet").onclick = () => {
-  $("#sTrack").value = cfg.track; $("#sHitch").value = cfg.hitch;
-  $("#sSound").checked = cfg.sound; $("#sDemo").checked = cfg.demo;
-  $("#set").showModal();
-};
-$("#setOk").onclick = () => {
-  cfg.track = +$("#sTrack").value || 2000; cfg.hitch = +$("#sHitch").value || 4000;
-  cfg.sound = $("#sSound").checked;
-  const wasDemo = cfg.demo; cfg.demo = $("#sDemo").checked;
-  save(); $("#set").close();
-  if (cfg.demo && !wasDemo) startDemo();
-  if (!cfg.demo && wasDemo) { stopDemo(); setPill("Offline"); }
-};
+$("#btnSet").onclick = () => showTab("settings");
+buildCfg();
 if (NATIVE) {
   $("#btnConn").style.display = "none";
   $("#nativeRow").hidden = false;
@@ -530,6 +864,14 @@ function startDemo(){
   if (!cfg.cal) {                                   // sensor "mounted on its edge, front toward -X"
     cfg.cal = { up:[0,1,0], front:[-1,0,0] };
   }
+  for (let i = 0; i < 20; i++) if (CFGV[i] === undefined) CFGV[i] = CD.def[i];
+  {
+    const n = 288, now = Date.now();
+    HIST = { count: n, interval: 5, newest: now, fetched: now, series: [
+      Array.from({ length: n }, (_, i) => 4.5 + 1.2 * Math.sin(i / 14) + (i > 200 && i < 215 ? (i - 200) / 3 : 0)),
+      Array.from({ length: n }, (_, i) => i < 40 ? NaN : 5 + 0.9 * Math.cos(i / 9)),
+      Array.from({ length: n }, (_, i) => 92 - i * 0.12 + 6 * Math.max(0, Math.sin(i / 30))) ] };
+  }
   demoTimer = setInterval(() => {
     const t = (Date.now() - demoT0) / 1000;
     const roll = 4 * Math.sin(t / 7) * Math.exp(-t / 90), pitch = 2.5 * Math.cos(t / 9) * Math.exp(-t / 90);
@@ -540,7 +882,7 @@ function startDemo(){
     S.b = { soc: 62 - (t / 600), v: 12.8, i: -8.4, ah: 71.2, ttg: 560 };
     S.s = { w: 140 + 20 * Math.sin(t / 5), a: 11.2, y: 0.84, st: 3 };
     if (t > 20 && !demoLat) demoLat = 8;            // grey water alarm after 20 s
-    S.t = { wae: 5.2, dom: 4.1, flags: demoLat ? 1 : 0, lat: demoLat, sil: demoSil, shown: -1 };
+    S.t = { wae: 5.2, dom: 4.1, flags: demoLat ? 1 : 0, lat: demoLat, sil: demoSil, shown: -1, quiet: false };
     S.lastRx = Date.now();
   }, 200);
 }
@@ -551,7 +893,7 @@ if (cfg.demo) startDemo();
 setInterval(() => { try { render(); } catch (e) { dbgErr("render: " + e.message); } }, 200);
 try { render(); } catch (e) { dbgErr("render: " + e.message); }
 setInterval(() => {
-  $("#diag").textContent = "build 3 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
+  $("#diag").textContent = "build 5 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
     + " \u00B7 " + (S.on ? "connected" : "not connected") + " \u00B7 packets " + DBG.n
     + (DBG.n ? " (" + Math.round((Date.now() - DBG.ev) / 1000) + "s ago)" : "");
 }, 500);

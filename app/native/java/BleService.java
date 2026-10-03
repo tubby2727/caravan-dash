@@ -57,6 +57,8 @@ public class BleService extends Service {
             UUID.fromString("c0a7a5e0-0003-4c1b-9f6e-5a1d0c4a0001"),   // battery
             UUID.fromString("c0a7a5e0-0004-4c1b-9f6e-5a1d0c4a0001"),   // solar
             UUID.fromString("c0a7a5e0-0005-4c1b-9f6e-5a1d0c4a0001"),   // status
+            UUID.fromString("c0a7a5e0-0007-4c1b-9f6e-5a1d0c4a0001"),   // settings
+            UUID.fromString("c0a7a5e0-0008-4c1b-9f6e-5a1d0c4a0001"),   // history
     };
     static final UUID CMD = UUID.fromString("c0a7a5e0-0006-4c1b-9f6e-5a1d0c4a0001");
     static final UUID CCC = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
@@ -80,6 +82,9 @@ public class BleService extends Service {
     private BluetoothAdapter adapter;
     private BluetoothGatt gatt;
     private BluetoothGattCharacteristic cmdChar;
+    private final ArrayDeque<byte[]> writeQ = new ArrayDeque<>();
+    private boolean writing;
+    private long lastClockSync;
     private final ArrayDeque<BluetoothGattCharacteristic> pending = new ArrayDeque<>();
     private boolean scanning;
     private int lastTop = -2;
@@ -278,6 +283,14 @@ public class BleService extends Service {
             h.post(BleService.this::enableNext);
         }
 
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt g, BluetoothGattCharacteristic c, int status) {
+            h.post(() -> {
+                writing = false;
+                writeNext();
+            });
+        }
+
         // Android 13+ delivers the value here
         @Override
         public void onCharacteristicChanged(BluetoothGatt g, BluetoothGattCharacteristic c, byte[] value) {
@@ -330,6 +343,9 @@ public class BleService extends Service {
         everConnected = true;
         lostNotified = false;
         lostSince = 0;
+        writeQ.clear();
+        writing = false;
+        sendClock();                      // lets the controller's quiet hours know the time of day
         CaravanState.lastRx = System.currentTimeMillis();
         getSystemService(NotificationManager.class).cancel(N_LINK);
         setConn("connected");
@@ -346,6 +362,8 @@ public class BleService extends Service {
         gatt = null;
         cmdChar = null;
         pending.clear();
+        writeQ.clear();
+        writing = false;
         if (CaravanState.connected) lostSince = System.currentTimeMillis();
         CaravanState.connected = false;
         setConn("searching");
@@ -372,24 +390,61 @@ public class BleService extends Service {
         Listener l = listener;
         if (l != null) l.onPacket(idx, v);
         if (idx == 3) evaluateAlarm();
+        // keep the controller's clock right (it has no clock of its own)
+        if (CaravanState.connected && System.currentTimeMillis() - lastClockSync > 30 * 60 * 1000L) sendClock();
     }
 
     /** Send 1 (silence 30 min) or 2 (silence until cleared) to the controller. */
-    @SuppressLint("MissingPermission")
-    @SuppressWarnings("deprecation")
     boolean writeCmd(int cmd) {
-        if (gatt == null || cmdChar == null) return false;
+        return writeBytes(new byte[]{(byte) cmd});
+    }
+
+    /** Queue any command for the controller's CMD characteristic. Writes go out one at a time. */
+    boolean writeBytes(byte[] b) {
+        if (gatt == null || cmdChar == null || b == null || b.length == 0 || b.length > 20) return false;
+        final byte[] copy = b.clone();
         h.post(() -> {
-            try {
-                if (gatt == null || cmdChar == null) return;
-                cmdChar.setValue(new byte[]{(byte) cmd});
-                cmdChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-                gatt.writeCharacteristic(cmdChar);
-            } catch (Exception e) {
-                Log.w(TAG, "command write failed: " + e);
-            }
+            if (writeQ.size() > 40) writeQ.poll();
+            writeQ.add(copy);
+            writeNext();
         });
         return true;
+    }
+
+    @SuppressLint("MissingPermission")
+    @SuppressWarnings("deprecation")
+    private void writeNext() {
+        if (writing || gatt == null || cmdChar == null) return;
+        byte[] b = writeQ.poll();
+        if (b == null) return;
+        try {
+            cmdChar.setValue(b);
+            cmdChar.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+            if (gatt.writeCharacteristic(cmdChar)) {
+                writing = true;
+                final BluetoothGatt gg = gatt;
+                // if the completion callback never comes, do not block the queue for ever
+                h.postDelayed(() -> {
+                    if (writing && gatt == gg) {
+                        writing = false;
+                        writeNext();
+                    }
+                }, 1500);
+            } else {
+                h.postDelayed(this::writeNext, 100);
+                writeQ.addFirst(b);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "command write failed: " + e);
+        }
+    }
+
+    /** Tell the controller the phone's time of day (opcode 0x13: minutes, seconds). */
+    private void sendClock() {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        int min = c.get(java.util.Calendar.HOUR_OF_DAY) * 60 + c.get(java.util.Calendar.MINUTE);
+        writeBytes(new byte[]{0x13, (byte) (min & 0xFF), (byte) (min >> 8), (byte) c.get(java.util.Calendar.SECOND)});
+        lastClockSync = System.currentTimeMillis();
     }
 
     // ---------------------------------------------------------------- notifications and widget

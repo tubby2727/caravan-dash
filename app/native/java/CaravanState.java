@@ -6,7 +6,7 @@ import java.util.Locale;
 
 /** Latest values from the controller, shared by the service, the widget and the plugin. */
 final class CaravanState {
-    static final String[] ALARMS = {"BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER"};
+    static final String[] ALARMS = {"BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER", "SENSOR LOST"};
 
     static volatile float soc = Float.NaN, volts = Float.NaN, amps = Float.NaN, ah = Float.NaN, ttg = Float.NaN;
     static volatile float solarW = Float.NaN, solarA = Float.NaN, yieldKwh = Float.NaN;
@@ -16,12 +16,20 @@ final class CaravanState {
     static volatile boolean connected = false;
     static volatile String conn = "searching";
 
-    private static final byte[][] raw = new byte[4][];
+    private static final byte[][] raw = new byte[6][];
+    /** Latest copy of every controller setting (index order as in caravan_ble.yaml), Integer.MIN_VALUE = not received. */
+    static final int[] cfg = new int[20];
+    static {
+        java.util.Arrays.fill(cfg, Integer.MIN_VALUE);
+    }
 
     private CaravanState() {}
 
     static synchronized void store(int idx, byte[] v) {
         if (idx >= 0 && idx < 4) raw[idx] = v;
+        if (idx == 4 && v != null && v.length >= 3 && (v[0] & 0xFF) < cfg.length) {
+            cfg[v[0] & 0xFF] = (short) ((v[1] & 0xFF) | (v[2] << 8));
+        }
     }
 
     static synchronized byte[] get(int idx) {
@@ -70,8 +78,8 @@ final class CaravanState {
 
     /** Lowest-numbered alarm that is latched and not silenced, or -1. */
     static int topAlarm() {
-        int s = latched & ~silenced & 0xF;
-        for (int i = 0; i < 4; i++) {
+        int s = latched & ~silenced & 0x1F;
+        for (int i = 0; i < 5; i++) {
             if (((s >> i) & 1) != 0) return i;
         }
         return -1;
@@ -111,6 +119,8 @@ final class CaravanState {
                 return "State of charge " + pct(soc);
             case 1:
                 return "Dometic " + temp(dom) + "   Waeco " + temp(wae);
+            case 4:
+                return "A sensor has stopped reporting";
             default:
                 return "Float switch closed";
         }

@@ -54,7 +54,7 @@ public class CaravanWidget extends AppWidgetProvider {
         } else if (top >= 0) {
             status = CaravanState.ALARMS[top];
             statusCol = BAD;
-        } else if ((CaravanState.latched & 0xF) != 0) {
+        } else if ((CaravanState.latched & 0x1F) != 0) {
             status = "SILENCED";
             statusCol = WARN;
         } else if (CaravanState.greyFull()) {

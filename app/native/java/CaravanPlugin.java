@@ -6,6 +6,8 @@ import android.os.Build;
 import android.provider.Settings;
 import android.util.Base64;
 
+import org.json.JSONObject;
+
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -50,6 +52,9 @@ public class CaravanPlugin extends Plugin {
             if (b != null) r.put("p" + i, Base64.encodeToString(b, Base64.NO_WRAP));
         }
         r.put("state", CaravanState.conn);
+        com.getcapacitor.JSArray cf = new com.getcapacitor.JSArray();
+        for (int v : CaravanState.cfg) cf.put(v == Integer.MIN_VALUE ? JSONObject.NULL : (Object) v);
+        r.put("cfg", cf);
         call.resolve(r);
     }
 
@@ -60,6 +65,23 @@ public class CaravanPlugin extends Plugin {
         BleService s = BleService.instance;
         JSObject r = new JSObject();
         r.put("ok", s != null && cmd > 0 && s.writeCmd(cmd));
+        call.resolve(r);
+    }
+
+    /** Send raw bytes (base64) to the controller's command characteristic: settings, history request, clock. */
+    @PluginMethod
+    public void write(PluginCall call) {
+        String b64 = call.getString("b");
+        BleService s = BleService.instance;
+        JSObject r = new JSObject();
+        boolean ok = false;
+        if (s != null && b64 != null) {
+            try {
+                ok = s.writeBytes(Base64.decode(b64, Base64.DEFAULT));
+            } catch (Exception ignored) {
+            }
+        }
+        r.put("ok", ok);
         call.resolve(r);
     }
 
