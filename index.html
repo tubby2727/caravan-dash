@@ -165,6 +165,7 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
   <div class="field"><label for="sHitch">Hitch to axle (mm)</label><input id="sHitch" type="number" min="1000" max="9000" step="100"></div>
   <div class="field"><label for="sSound">Beep / vibrate</label><input id="sSound" type="checkbox"></div>
   <div class="field"><label for="sDemo">Demo data (no controller)</label><input id="sDemo" type="checkbox"></div>
+  <div class="row" id="nativeRow" hidden><button class="btn ghost" id="btnBatt">Allow background running</button></div>
   <div class="row"><button class="btn" id="setOk">Done</button></div>
 </dialog>
 
@@ -217,6 +218,23 @@ const dec = {
   },
 };
 
+/* ---------------- native app mode (Android app wrapper) ---------------- */
+const NATIVE = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
+const CB = NATIVE ? Capacitor.registerPlugin("CaravanBle") : null;
+const KEYS = ["level", "batt", "solar", "status"];
+const CONNTXT = { connected:"Connected", searching:"Searching…", connecting:"Connecting…", noperm:"Allow Bluetooth", "bt off":"Bluetooth off" };
+function b64dv(b){ const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new DataView(u.buffer); }
+function nativePacket(i, b){ if (!b || !KEYS[i]) return; dec[KEYS[i]](b64dv(b)); S.lastRx = Date.now(); }
+function nativeConn(st){ S.on = st === "connected"; setPill(CONNTXT[st] || st, S.on); }
+async function nativeSnapshot(){
+  try { const r = await CB.snapshot(); for (let i = 0; i < 4; i++) nativePacket(i, r["p" + i]); nativeConn(r.state); } catch (_) {}
+}
+async function nativeInit(){
+  await CB.addListener("packet", e => nativePacket(e.i, e.b));
+  await CB.addListener("conn", e => nativeConn(e.state));
+  await nativeSnapshot();
+}
+
 async function connect(){
   try {
     initAudio();
@@ -253,6 +271,7 @@ function onDisc(){
 }
 async function sendCmd(n){
   if (cfg.demo) { demoSilence(n); return; }
+  if (NATIVE) { try { await CB.command({ cmd: n }); } catch (_) { setPill("Write failed"); } return; }
   if (!cmdCh) return;
   try { await cmdCh.writeValueWithResponse(new Uint8Array([n])); } catch (e) { setPill("Write failed"); }
 }
@@ -411,7 +430,7 @@ function renderBanner(live){
   } else if (Number.isNaN(S.b.soc)) {
     el.className = "warn"; txt.textContent = "SENSOR LOST: SHUNT";
   } else { el.className = ""; txt.textContent = "ALL OK"; }
-  if (top !== lastShown) { if (top >= 0) beeps(BEEPS[top]); lastShown = top; }
+  if (top !== lastShown) { if (top >= 0 && !NATIVE) beeps(BEEPS[top]); lastShown = top; }
 }
 
 function renderLevel(live){
@@ -477,7 +496,15 @@ $("#setOk").onclick = () => {
   if (cfg.demo && !wasDemo) startDemo();
   if (!cfg.demo && wasDemo) { stopDemo(); setPill("Offline"); }
 };
-if (!("bluetooth" in navigator)) { $("#btnConn").textContent = "No Bluetooth"; $("#btnConn").disabled = true; $("#bannerTxt").textContent = "Open in Chrome on Android"; }
+if (NATIVE) {
+  $("#btnConn").style.display = "none";
+  $("#nativeRow").hidden = false;
+  $("#btnBatt").onclick = () => { try { CB.batterySettings(); } catch (_) {} };
+  nativeInit();
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") nativeSnapshot(); });
+  setPill("Searching…");
+}
+if (!NATIVE && !("bluetooth" in navigator)) { $("#btnConn").textContent = "No Bluetooth"; $("#btnConn").disabled = true; $("#bannerTxt").textContent = "Open in Chrome on Android"; }
 
 /* ---------------- demo data (preview with no controller) ---------------- */
 let demoTimer, demoT0, demoLat = 0, demoSil = 0;
@@ -506,7 +533,7 @@ function demoSilence(n){ if (!demoLat) return; demoSil = demoLat; }
 if (cfg.demo) startDemo();
 setInterval(render, 200);
 render();
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+if (!NATIVE && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
 </body>
 </html>

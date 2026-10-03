@@ -1,0 +1,7 @@
+{
+  "appId": "au.caravan.controller",
+  "appName": "Caravan",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "backgroundColor": "#0B0F14" }
+}
