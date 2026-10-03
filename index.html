@@ -19,17 +19,61 @@ body{min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bot
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 header{display:flex;align-items:center;gap:10px;padding:12px 16px}
 .brand{font-weight:700;font-size:18px;letter-spacing:.3px;flex:1}
-#pill{font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--line);color:var(--sec)}
+#pill{white-space:nowrap;font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--line);color:var(--sec)}
 #pill.on{background:#12301F;color:var(--ok)}
 .btn{background:var(--acc);color:#04121f;font-weight:700;padding:9px 14px;border-radius:12px}
 .btn.ghost{background:var(--tile);color:var(--txt);border:1px solid var(--line)}
 .icon{width:38px;height:38px;border-radius:12px;background:var(--tile);border:1px solid var(--line);font-size:18px}
-#banner{margin:0 16px 10px;padding:12px 14px;border-radius:14px;background:#12301F;color:var(--ok);font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#banner{margin:0 0 10px;padding:10px 16px;min-height:48px;box-sizing:border-box;background:#12301F;color:var(--ok);font-weight:700;font-size:17px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;text-align:center;gap:10px;flex-wrap:wrap}
 #banner.warn{background:#4a3200;color:var(--warn)}
 #banner.mute{background:#2D2D2D;color:var(--warn)}
 #banner.alarm{background:var(--alarm);color:#fff;font-size:20px}
 #banner.off{background:var(--tile);color:var(--sec)}
-#banner .grow{flex:1;min-width:120px}
+#banner .grow{min-width:120px}
+#banner.warn{background:#A86500;color:#fff}
+#greyChip{white-space:nowrap;font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--tile);color:var(--sec)}
+#greyChip.full{background:#4a3200;color:var(--warn)}
+#greyChip.off{color:var(--stale)}
+
+/* dash v1.4 */
+.pcard{background:var(--tile);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:10px}
+#flow{display:block;width:100%;height:auto;font-family:"Segoe UI",system-ui,sans-serif}
+.fl{fill:none;stroke-width:3.6;stroke-linecap:round;stroke-dasharray:0.1 7;animation:fl 1.2s linear infinite}
+.fl.off{opacity:0;animation:none}
+@keyframes fl{to{stroke-dashoffset:-7.1}}
+.night{display:flex;align-items:center;gap:10px;padding:2px 14px 12px;font-size:15px;line-height:1.3}
+.night svg{flex:none}
+.night b{font-weight:600}
+.trend{border-top:1px solid var(--line);padding:12px 14px 10px}
+.trend svg{display:block;width:100%;height:auto}
+.thead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;font-size:12px;color:var(--sec)}
+.thead .lbl2{letter-spacing:1px;text-transform:uppercase}
+.tlabels{display:flex;justify-content:space-between;font-size:11px;color:var(--stale);margin-top:3px}
+.detbtn{width:100%;height:44px;border-top:1px solid var(--line)!important;color:#7CC4FF;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
+.detgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 10px;padding:4px 14px 14px}
+.detgrid .v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.detgrid .l{font-size:12px;color:var(--sec)}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.ftile{background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:10px 12px 8px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ftile .fh{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--sec)}
+.ftile .fbar{width:4px;height:16px;border-radius:2px;background:var(--stale)}
+.ftile .ft{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.ftile .fs{font-size:12px;color:var(--sec)}
+.ftile svg{display:block;width:100%;height:auto;margin-top:4px}
+.ftile .fl2{display:flex;justify-content:space-between;font-size:11px;color:var(--stale)}
+.box{background:var(--tile);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.box .hd{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--sec)}
+.tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px;margin-top:10px}
+.tgrid .v{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.tgrid .l{font-size:12px;color:var(--sec)}
+.evrow{display:flex;align-items:center;gap:10px;min-height:48px;border-top:1px solid var(--line)}
+.evrow .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.evrow .w{flex:1;min-width:0}
+.evrow .w b{display:block;font-size:15px;font-weight:600}
+.evrow .w span{font-size:12px;color:var(--sec)}
+.evrow .when{font-size:13px;color:var(--sec);text-align:right}
+.linkbtn{color:#7CC4FF;font-weight:600;font-size:14px;padding:10px 0}
+#logList{max-height:60vh;overflow:auto}
 #banner button{background:rgba(255,255,255,.18);padding:8px 12px;border-radius:10px;font-size:14px;font-weight:700;color:#fff}
 .tabs{display:flex;gap:8px;margin:0 16px 12px}
 .tabs button{flex:1;padding:11px;border-radius:12px;background:var(--tile);border:1px solid var(--line);font-weight:600;color:var(--sec)}
@@ -111,6 +155,7 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
 <body>
 <header>
   <div class="brand">Caravan</div>
+  <div id="greyChip" class="off">Grey --</div>
   <div id="pill">Offline</div>
   <button class="btn" id="btnConn">Connect</button>
   <button class="icon" id="btnSet" aria-label="Settings">&#9881;</button>
@@ -130,27 +175,71 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
 
 <main>
 <section id="dash" class="on">
-  <div class="grid">
-    <div class="tile span" id="tSoc">
-      <div class="hero">
-        <svg viewBox="0 0 130 130">
-          <circle class="ring-bg" cx="65" cy="65" r="54" fill="none" stroke-width="12"/>
-          <circle id="ring" cx="65" cy="65" r="54" fill="none" stroke-width="12" stroke-linecap="round"
-                  stroke-dasharray="339.3" stroke-dashoffset="339.3" transform="rotate(-90 65 65)" stroke="var(--stale)"/>
-        </svg>
-        <div>
-          <div class="lbl">Battery</div>
-          <div class="big" id="soc">--</div>
-          <div class="sub" id="battSub">--</div>
-        </div>
-      </div>
+  <div class="pcard">
+    <svg id="flow" viewBox="0 0 304 130" aria-label="Power flow">
+      <path d="M58 33 L102 33" stroke="#2A3441" stroke-width="2" fill="none"/>
+      <path d="M208 33 L246 33" stroke="#2A3441" stroke-width="2" fill="none"/>
+      <path id="dotS" class="fl" d="M60 33 L100 33" stroke="#7CC4FF"/>
+      <path id="dotV" class="fl" d="M210 33 L244 33" stroke="#F2B36B"/>
+      <circle cx="38" cy="33" r="18" fill="#0F141B" stroke="#2A3441"/>
+      <g transform="translate(30 25) scale(0.68)" fill="none" stroke="#F2F5F8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></g>
+      <rect x="106" y="6" width="94" height="54" rx="9" fill="#0F141B" stroke="#8A96A3" stroke-width="2.5"/>
+      <rect x="200" y="22" width="6" height="22" rx="2" fill="#8A96A3"/>
+      <rect id="fillR" x="111" y="11" width="0" height="44" rx="5" fill="#16804A"/>
+      <path id="bolt" d="" fill="#FFFFFF"/>
+      <text id="pctT" x="153" y="41" text-anchor="middle" fill="#FFFFFF" font-size="22" font-weight="600">--</text>
+      <circle cx="266" cy="33" r="18" fill="#0F141B" stroke="#2A3441"/>
+      <g transform="translate(258 25) scale(0.68)" fill="none" stroke="#F2F5F8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16V8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8zM19 14h3"/><circle cx="9" cy="17.5" r="2"/></g>
+      <text id="solT" x="38" y="74" text-anchor="middle" fill="#F2F5F8" font-size="16" font-weight="600">--</text>
+      <text id="netT" x="152" y="74" text-anchor="middle" fill="#F2F5F8" font-size="16" font-weight="600">--</text>
+      <text id="vanT" x="266" y="74" text-anchor="middle" fill="#F2F5F8" font-size="16" font-weight="600">--</text>
+      <text x="38" y="88" text-anchor="middle" fill="#8A96A3" font-size="12">Solar</text>
+      <text x="152" y="88" text-anchor="middle" fill="#8A96A3" font-size="12">Battery</text>
+      <text x="266" y="88" text-anchor="middle" fill="#8A96A3" font-size="12">Van using</text>
+      <rect id="stripR" x="8" y="96" width="288" height="26" rx="7" fill="#232C37"/>
+      <text id="stripT" x="152" y="115" text-anchor="middle" fill="#8A96A3" font-size="16" font-weight="600">NO BATTERY DATA</text>
+    </svg>
+    <div class="night">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path id="nIcon" stroke="#8A96A3" d=""/></svg>
+      <div><b id="n1">&nbsp;</b><br><span id="n2">&nbsp;</span></div>
     </div>
-    <div class="tile" id="tTtg"><div class="lbl">Time to empty</div><div class="val" id="ttg">--</div><div class="sub" id="ttgSub">&nbsp;</div></div>
-    <div class="tile" id="tNet"><div class="lbl">Net current</div><div class="val" id="net">--</div><div class="sub" id="pwr">&nbsp;</div></div>
-    <div class="tile" id="tSol"><div class="lbl">Solar</div><div class="val" id="solW">--</div><div class="sub" id="solSub">&nbsp;</div></div>
-    <div class="tile" id="tGrey"><div class="lbl">Grey water</div><div class="val" id="grey">--</div><div class="sub">float switch</div></div>
-    <div class="tile" id="tWae"><div class="lbl">Waeco</div><div class="val" id="wae">--</div><div class="sub" id="waeSub">&nbsp;</div></div>
-    <div class="tile" id="tDom"><div class="lbl">Dometic</div><div class="val" id="dom">--</div><div class="sub" id="domSub">&nbsp;</div></div>
+    <div class="trend">
+      <div class="thead"><span class="lbl2">Battery, last 24 h</span><span id="tLow"></span></div>
+      <svg id="trend" viewBox="0 0 326 56" aria-label="Battery charge over the last 24 hours"></svg>
+      <div class="tlabels" id="tLab"><span></span><span></span><span></span><span>now</span></div>
+    </div>
+    <button class="detbtn" id="btnDet" aria-expanded="false"><span id="detLbl">Details</span>
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#7CC4FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path id="detChev" d="M6 9l6 6 6-6"/></svg></button>
+    <div class="detgrid" id="det" hidden>
+      <div><div class="v" id="dV">--</div><div class="l">Battery</div></div>
+      <div><div class="v" id="dA">--</div><div class="l">Current</div></div>
+      <div><div class="v" id="dAh">--</div><div class="l">Used</div></div>
+      <div><div class="v" id="dSA">--</div><div class="l">Solar current</div></div>
+      <div><div class="v" id="dSt">--</div><div class="l">MPPT state</div></div>
+      <div><div class="v" id="dY">--</div><div class="l">Solar yield</div></div>
+      <div><div class="v" id="dF">--</div><div class="l">Victron</div></div>
+      <div><div class="v" id="dR">--</div><div class="l">Resets</div></div>
+    </div>
+  </div>
+
+  <div class="fgrid">
+    <div class="ftile" id="fW"><div class="fh"><div class="fbar"></div>Waeco</div><div class="ft">--</div><div class="fs">&nbsp;</div><svg viewBox="0 0 150 40"></svg><div class="fl2"><span>24 h</span><span class="lim"></span></div></div>
+    <div class="ftile" id="fD"><div class="fh"><div class="fbar"></div>Dometic</div><div class="ft">--</div><div class="fs">&nbsp;</div><svg viewBox="0 0 150 40"></svg><div class="fl2"><span>24 h</span><span class="lim"></span></div></div>
+  </div>
+
+  <div class="box">
+    <div class="hd">Today</div>
+    <div class="tgrid">
+      <div><div class="v" id="tdSol">--</div><div class="l">Solar in</div></div>
+      <div><div class="v" id="tdVan">--</div><div class="l">Van used</div></div>
+      <div><div class="v" id="tdBal">--</div><div class="l" id="tdBalL">Balance</div></div>
+      <div><div class="v" id="tdLow">--</div><div class="l" id="tdLowL">Lowest overnight</div></div>
+    </div>
+  </div>
+
+  <div class="box" style="padding-bottom:4px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><span class="hd">Recent alarms</span><button class="linkbtn" id="btnLog">Full log</button></div>
+    <div id="evList"></div>
   </div>
 </section>
 
@@ -193,6 +282,7 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
   <div class="chart" id="chW"></div>
   <div class="chart" id="chD"></div>
   <div class="chart" id="chB"></div>
+  <div class="chart" id="chS"></div>
   <div class="note">One point every 5 minutes, kept in the controller (saved every 30 min, so a power cut shows as a short gap). Drag a finger across a graph to read it.</div>
 </section>
 
@@ -210,16 +300,27 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
     <div class="srow"><div class="sl">Wheel track (mm)<br><span class="gn">for the "raise this much" hints</span></div><input id="sTrack" type="number" min="500" max="4000" step="50"></div>
     <div class="srow"><div class="sl">Hitch to axle (mm)</div><input id="sHitch" type="number" min="1000" max="9000" step="100"></div>
     <div class="srow"><div class="sl">Level tolerance</div><div class="stp"><button id="tolM">&minus;</button><span class="sv" id="tolV">0.5°</span><button id="tolP">+</button></div></div>
+    <div class="srow"><div class="sl">Location for sunrise and sunset<br><span class="gn" id="locTxt">--</span></div><button class="btn ghost" id="btnLoc">Use my location</button></div>
+    <div class="srow"><div class="sl">Or type it (latitude, longitude)</div><input id="sLat" type="number" step="0.01" min="-90" max="90" style="width:84px"><input id="sLon" type="number" step="0.01" min="-180" max="180" style="width:84px"></div>
     <div class="srow"><div class="sl">Beep / vibrate in the page</div><input id="sSound" type="checkbox" class="sw"></div>
     <div class="srow"><div class="sl">Demo data (no controller)</div><input id="sDemo" type="checkbox" class="sw"></div>
     <div class="srow" id="nativeRow" hidden><div class="sl">Keep running in the background</div><button class="btn ghost" id="btnBatt">Allow</button></div>
   </div>
   <div class="card">
     <h4>Controller</h4>
+    <div class="srow"><div class="sl">Controller Wi-Fi<br><span class="gn">Turns its Wi-Fi on for 15 minutes, for the web page or an update</span></div><button class="btn ghost" id="btnWifi">Turn on</button></div>
+    <div class="srow"><div class="sl">Unexpected restarts<br><span class="gn" id="rstTxt">--</span></div><button class="btn ghost" id="btnRst">Clear</button></div>
     <div class="srow"><div class="sl">Reset every setting to the factory values</div><button class="btn ghost" id="btnReset">Reset</button></div>
   </div>
 </section>
 </main>
+
+<dialog id="logDlg">
+  <h3>Alarm log</h3>
+  <p style="margin:0 0 8px">Kept on this phone. The controller keeps its last 32 events until it restarts.</p>
+  <div id="logList"></div>
+  <div class="row" style="margin-top:12px"><button class="btn ghost" id="logX">Close</button></div>
+</dialog>
 
 <dialog id="cal">
   <h3 id="calT"></h3>
@@ -251,11 +352,15 @@ const U = {
   solar:  "c0a7a5e0-0004-4c1b-9f6e-5a1d0c4a0001",
   status: "c0a7a5e0-0005-4c1b-9f6e-5a1d0c4a0001",
   cmd:    "c0a7a5e0-0006-4c1b-9f6e-5a1d0c4a0001",
+  power:  "c0a7a5e0-0009-4c1b-9f6e-5a1d0c4a0001",   // v1.4
+  log:    "c0a7a5e0-000a-4c1b-9f6e-5a1d0c4a0001",   // v1.4
 };
 const NA = 0x7FFF;
-const ALARMS = ["BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER", "SENSOR LOST"];
-const SHORT = ["Batt critical", "Fridge", "Batt low", "Grey water", "Sensor"];
-const BEEPS = [4, 6, 2, 1, 3];
+const ALARMS = ["BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER", "SENSOR LOST", "VICTRON FAULT"];
+const SHORT = ["Batt critical", "Fridge", "Batt low", "Grey water", "Sensor", "Victron"];
+const NICE = ["Battery critical", "Fridge warm", "Battery low", "Grey water", "Sensor lost", "Victron fault"];
+const BEEPS = [4, 6, 2, 1, 3, 5];
+const NAL = 6;
 const MPPT = {0:"Off",2:"Bulk",3:"Absorb",4:"Float",5:"Equalise",6:"Fault"};
 
 const $ = s => document.querySelector(s);
@@ -265,8 +370,8 @@ const fmt = (v, d, u) => Number.isNaN(v) || v === undefined ? "--" : v.toFixed(d
 /* ---------------- state ---------------- */
 const S = { on:false, lastRx:0, a:null, buf:[],
   b:{soc:NaN,v:NaN,i:NaN,ah:NaN,ttg:NaN}, s:{w:NaN,a:NaN,y:NaN,st:0},
-  t:{wae:NaN,dom:NaN,flags:0,lat:0,sil:0,shown:-1}, shown:-1 };
-const cfg = Object.assign({ track:2000, hitch:4000, sound:true, demo:false, cal:null, tol:0.5 },
+  t:{wae:NaN,dom:NaN,flags:0,lat:0,sil:0,shown:-1}, shown:-1, p:null };
+const cfg = Object.assign({ track:2000, hitch:4000, sound:true, demo:false, cal:null, tol:0.5, lat:-38.1, lon:145.8, locSet:false },
   JSON.parse(localStorage.getItem("cv") || "{}"));
 if (new URLSearchParams(location.search).has("demo")) cfg.demo = true;
 const save = () => localStorage.setItem("cv", JSON.stringify(cfg));
@@ -299,18 +404,40 @@ const dec = {
     const b0 = dv.getUint8(0);
     if (b0 === 0xFE) {
       const count = dv.getUint16(1, true);
-      HB = { count, interval: dv.getUint8(3) || 5, age: dv.getUint16(4, true), t: Date.now(), got: 0, series: [0, 1, 2].map(() => new Array(count).fill(NaN)) };
+      HB = { count, interval: dv.getUint8(3) || 5, age: dv.getUint16(4, true), t: Date.now(), got: 0, nser: histNser, series: [0, 1, 2, 3].map(() => new Array(count).fill(NaN)) };
       if (count === 0) histDone();
       return;
     }
-    if (!HB || b0 > 2) return;
+    if (!HB || b0 > 3) return;
     const off = dv.getUint16(1, true), n = dv.getUint8(3);
     for (let j = 0; j < n; j++) {
       if (off + j >= HB.count) break;
       const raw = dv.getInt16(4 + 2 * j, true);
       HB.series[b0][off + j] = raw === NA ? NaN : raw / 10; HB.got++;
     }
-    if (HB.got >= HB.count * 3) histDone();
+    if (HB.got >= HB.count * HB.nser) histDone();
+  },
+  power(dv){                                       // v1.4: power flow, today, health
+    if (dv.byteLength < 17) return;
+    const g = o => dv.getInt16(o, true), van = g(2);
+    const lt = dv.getUint16(14, true), first = !S.p;
+    S.p = { sol: sc(g(0), 1), van: van === 0x7FFE ? NaN : sc(van, 1), mains: van === 0x7FFE, bat: sc(g(4), 1),
+            full: sc(g(6), 1), vanWh: sc(g(8), 1), low: sc(g(10), 10), pf: dv.getUint8(12), resets: dv.getUint8(13),
+            logTotal: lt, err: dv.getUint8(16), t: Date.now() };
+    if (first) histNser = 4;
+    if (S.on && !LB && lt !== logSeen && Date.now() - logAsked > 4000) logRequest();
+  },
+  log(dv){                                         // v1.4: alarm log, after command 0x17
+    const k = dv.getUint8(0);
+    if (k === 0xFD) {
+      LB = { count: dv.getUint8(1), total: dv.getUint16(2, true), now: dv.getUint32(4, true), rx: Date.now(), ev: [] };
+      if (!LB.count) logDone();
+      return;
+    }
+    if (k === 0xFC && LB && dv.byteLength >= 9) {
+      LB.ev.push({ seq: dv.getUint16(1, true), a: dv.getUint8(3), e: dv.getUint8(4), at: dv.getUint32(5, true) });
+      if (LB.ev.length >= LB.count) logDone();
+    }
   },
 };
 
@@ -321,14 +448,14 @@ const CB = !NATIVE ? null
   : (typeof Capacitor.registerPlugin === "function" ? Capacitor.registerPlugin("CaravanBle")
   : (Capacitor.Plugins && Capacitor.Plugins.CaravanBle) || null);
 if (NATIVE && !CB) dbgErr("CaravanBle plugin not found in Capacitor.Plugins");
-const KEYS = ["level", "batt", "solar", "status", "cfg", "hist"];
+const KEYS = ["level", "batt", "solar", "status", "cfg", "hist", "power", "log"];
 const CONNTXT = { connected:"Connected", searching:"Searching…", connecting:"Connecting…", noperm:"Allow Bluetooth", "bt off":"Bluetooth off" };
 function b64dv(b){ const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new DataView(u.buffer); }
 function nativePacket(i, b){ if (!b || !KEYS[i]) return; dec[KEYS[i]](b64dv(b)); if (i < 4) S.lastRx = Date.now(); DBG.n++; DBG.ev = Date.now(); }
-function nativeConn(st){ const was = S.on; S.on = st === "connected"; setPill(CONNTXT[st] || st, S.on); if (S.on && !was) setTimeout(reqCfg, 900); }
+function nativeConn(st){ const was = S.on; S.on = st === "connected"; setPill(CONNTXT[st] || st, S.on); if (S.on && !was) { setTimeout(reqCfg, 900); setTimeout(dashFetch, 3000); } }
 async function nativeSnapshot(){
   if (!CB) return;
-  try { const r = await CB.snapshot(); for (let i = 0; i < 4; i++) nativePacket(i, r["p" + i]); if (r.cfg) r.cfg.forEach((v, i) => { if (v !== null && v !== undefined && CFGV[i] === undefined) CFGV[i] = v; }); nativeConn(r.state); } catch (_) {}
+  try { const r = await CB.snapshot(); for (let i = 0; i < 4; i++) nativePacket(i, r["p" + i]); if (r.p6) nativePacket(6, r.p6); if (r.cfg) r.cfg.forEach((v, i) => { if (v !== null && v !== undefined && CFGV[i] === undefined) CFGV[i] = v; }); nativeConn(r.state); } catch (_) {}
 }
 async function nativeInit(){
   if (!CB) return;
@@ -358,7 +485,7 @@ async function open(){
     await ch.startNotifications();
     try { dec[k](await ch.readValue()); S.lastRx = Date.now(); } catch (_) {}
   }
-  for (const k of ["cfg", "hist"]) {            // newer firmware only
+  for (const k of ["cfg", "hist", "power", "log"]) {   // newer firmware only
     try {
       const ch = await svc.getCharacteristic(U[k]);
       ch.addEventListener("characteristicvaluechanged", e => dec[k](e.target.value));
@@ -370,6 +497,7 @@ async function open(){
   pinSend();                                     // unlock first: the controller ignores commands until it has the PIN
   { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); sendBytes([0x13, m & 255, m >> 8, d.getSeconds()]); }
   setTimeout(reqCfg, 600);
+  setTimeout(dashFetch, 2500);
   keepAwake();
 }
 function onDisc(){
@@ -517,49 +645,285 @@ function setNum(id, text, c){ const e = $(id); e.textContent = text; e.classList
 
 let lastShown = -2, levelSince = 0, chimed = false;
 
+/* ---------------- dash v1.4 helpers ---------------- */
+const cv = i => CFGV[i] === undefined ? CD.def[i] : CFGV[i];      // controller settings, or factory values
+const isNum = v => typeof v === "number" && Number.isFinite(v);
+function clock(t){                                  // "9:20 am", "Tue 9:20 am" when not today or tomorrow
+  const d = new Date(t), now = new Date();
+  let h = d.getHours(), ap = h < 12 ? "am" : "pm"; h = h % 12 || 12;
+  const s = h + ":" + String(d.getMinutes()).padStart(2, "0") + " " + ap;
+  const days = Math.round((new Date(d).setHours(0,0,0,0) - new Date(now).setHours(0,0,0,0)) / 86400000);
+  return days > 1 ? d.toLocaleDateString(undefined, { weekday: "short" }) + " " + s : s;
+}
+function dur(m){ m = Math.round(m); return m < 60 ? m + " m" : Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") + " m"; }
+
+/* Sunrise / sunset (NOAA sunrise equation). lon east positive. Returns ms times or null (polar). */
+function sunTimes(day, lat, lon){
+  const r = Math.PI / 180, d = new Date(day); d.setHours(12, 0, 0, 0);
+  const J = d.getTime() / 86400000 + 2440587.5;
+  const n = Math.round(J - 2451545.0 + 0.0008);
+  const Js = n - lon / 360;
+  const M = ((357.5291 + 0.98560028 * Js) % 360 + 360) % 360;
+  const C = 1.9148 * Math.sin(M * r) + 0.02 * Math.sin(2 * M * r) + 0.0003 * Math.sin(3 * M * r);
+  const L = (M + C + 180 + 102.9372) % 360;
+  const Jt = 2451545.0 + Js + 0.0053 * Math.sin(M * r) - 0.0069 * Math.sin(2 * L * r);
+  const dec = Math.asin(Math.sin(L * r) * Math.sin(23.4397 * r));
+  const cw = (Math.sin(-0.833 * r) - Math.sin(lat * r) * Math.sin(dec)) / (Math.cos(lat * r) * Math.cos(dec));
+  if (cw < -1 || cw > 1) return null;
+  const w = Math.acos(cw) / r / 360, ms = j => (j - 2440587.5) * 86400000;
+  return { rise: ms(Jt - w), set: ms(Jt + w) };
+}
+function sunNow(){
+  const now = Date.now(), t = sunTimes(now, cfg.lat, cfg.lon);
+  if (!t) return null;
+  const tm = sunTimes(now + 86400000, cfg.lat, cfg.lon);
+  return { up: now > t.rise && now < t.set, set: t.set, nextRise: now < t.rise ? t.rise : (tm ? tm.rise : t.rise + 86400000) };
+}
+
+/* charging / on battery / full, same rules as the controller (with a little hysteresis) */
+let pfState = 0;
+function powerState(soc, i){
+  if (!isNum(soc) || !isNum(i)) pfState = 0;
+  else if (soc >= 99.5 && i > -0.3) pfState = 3;
+  else if (i > 0.15) pfState = 1;
+  else if (i < -0.15) pfState = 2;
+  else if (pfState === 0 || pfState === 3) pfState = 2;
+  return pfState;
+}
+
+/* fridge "warm since": the phone tracks when it saw each probe go over its limit */
+const warmSince = { wae: 0, dom: 0 }, warmPrev = { wae: NaN, dom: NaN };
+function trackWarm(k, v, lim){
+  const was = warmPrev[k]; warmPrev[k] = v;
+  if (!isNum(v) || v <= lim) { warmSince[k] = 0; return; }
+  if (!warmSince[k] && isNum(was) && was <= lim) warmSince[k] = Date.now();
+}
+
+/* ---------------- alarm log (kept on the phone, merged with each read from the controller) ---------------- */
+let LB = null, logSeen = -1, logAsked = 0, LOG = [];
+try { LOG = JSON.parse(localStorage.getItem("alog") || "[]"); } catch (_) { LOG = []; }
+function logRequest(){ logAsked = Date.now(); LB = null; sendBytes([0x17]); setTimeout(() => { if (LB) logDone(); }, 6000); }
+function logDone(){
+  if (!LB) return;
+  for (const e of LB.ev) {
+    const t = LB.rx - (LB.now - e.at) * 1000;
+    if (!LOG.some(x => x.a === e.a && x.e === e.e && Math.abs(x.t - t) < 90000)) LOG.push({ a: e.a, e: e.e, t });
+  }
+  LOG.sort((x, y) => x.t - y.t);
+  if (LOG.length > 150) LOG = LOG.slice(-150);
+  logSeen = LB.total; LB = null;
+  try { localStorage.setItem("alog", JSON.stringify(LOG)); } catch (_) {}
+  logRender();
+}
+const EVTXT = ["", "Fired", "Muted", "Silenced until cleared", "Sounding again", "Cleared"];
+function episodes(){                                 // one row per time an alarm fired, newest first
+  const out = [];
+  LOG.forEach((x, i) => {
+    if (x.e !== 1) return;
+    let how = "Sounding", end = null;
+    for (let j = i + 1; j < LOG.length; j++) {
+      const y = LOG[j]; if (y.a !== x.a) continue;
+      if (y.e === 1) break;
+      if (y.e === 5) { end = y.t; break; }
+      if (y.e === 2) how = "Muted";
+      if (y.e === 3) how = "Silenced until cleared";
+      if (y.e === 4) how = "Sounding again";
+    }
+    if (end) how = "Cleared after " + dur((end - x.t) / 60000);
+    out.push({ a: x.a, t: x.t, how, open: !end });
+  });
+  return out.reverse();
+}
+const EVCOL = ["#F87171", "#FBBF24", "#FBBF24", "#7CC4FF", "#8A96A3", "#F87171"];
+function whenTxt(t){
+  const d = new Date(t), today = new Date().setHours(0,0,0,0);
+  const day = new Date(t).setHours(0,0,0,0) === today ? "Today" : d.toLocaleDateString(undefined, { weekday: "short" });
+  return day + " " + clock(t).replace(/^\w{3} /, "");
+}
+function evRow(dot, what, how, when){
+  const r = el("div", "evrow"), d = el("div", "dot"), w = el("div", "w");
+  d.style.background = dot; w.append(el("b", "", what), el("span", "", how));
+  r.append(d, w, el("div", "when", when)); return r;
+}
+function logRender(){
+  const box = $("#evList"); box.innerHTML = "";
+  const ep = episodes().slice(0, 3);
+  if (!ep.length) box.appendChild(evRow("#4ADE80", "No alarms", S.p || LOG.length ? "Nothing in the log" : "Needs controller firmware v1.4", ""));
+  for (const e of ep) box.appendChild(evRow(EVCOL[e.a] || "#8A96A3", NICE[e.a] || "Alarm " + e.a, e.how, whenTxt(e.t)));
+  const all = $("#logList"); all.innerHTML = "";
+  if (!LOG.length) all.appendChild(el("p", "", "Nothing logged yet."));
+  for (const x of LOG.slice().reverse()) all.appendChild(evRow(EVCOL[x.a] || "#8A96A3", NICE[x.a] || "Alarm " + x.a, EVTXT[x.e] || "", whenTxt(x.t)));
+}
+$("#btnLog").onclick = () => { logRender(); $("#logDlg").showModal(); if (S.on && !LB) logRequest(); };
+$("#logX").onclick = () => $("#logDlg").close();
+
+/* fetched on connect and every 10 minutes: history (battery trend, fridge graphs) and the alarm log */
+function dashFetch(){
+  if (!S.on && !cfg.demo) return;
+  if (!HB) histRequest();
+  if (S.p && !LB) logRequest();
+}
+setInterval(() => { if (S.on && !HB && Date.now() - histSince > 10 * 60000) dashFetch(); }, 30000);
+
+/* small line graphs */
+function spark(vals, W, H, lo, hi){
+  let d = "", pen = false;
+  const n = vals.length;
+  vals.forEach((v, i) => {
+    if (!isNum(v)) { pen = false; return; }
+    const x = n > 1 ? i * W / (n - 1) : W, y = 2 + (hi - v) / (hi - lo) * (H - 4);
+    d += (pen ? " L" : "M") + x.toFixed(1) + " " + Math.max(1, Math.min(H - 1, y)).toFixed(1); pen = true;
+  });
+  return d;
+}
+let detOpen = false;
+$("#btnDet").onclick = () => {
+  detOpen = !detOpen; $("#det").hidden = !detOpen; $("#btnDet").setAttribute("aria-expanded", detOpen);
+  $("#detLbl").textContent = detOpen ? "Hide details" : "Details"; $("#detChev").setAttribute("d", detOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6");
+};
+const setT = (id, t, c) => { const e = $(id); if (e.textContent !== t) e.textContent = t; if (c) e.setAttribute("fill", c); };
+const OKC = "#4ADE80", WARNC = "#FBBF24", TXTC = "#F2F5F8", STALEC = "#5B6773", SECC = "#8A96A3";
+let trendKey = "", fridgeKey = "";
+
 function render(){
   const live = cfg.demo || (S.on && Date.now() - S.lastRx < 6000);
   const b = S.b, s = S.s, t = S.t;
+  const P = live && S.p && Date.now() - S.p.t < 8000 ? S.p : null;    // v1.4 power packet
 
-  /* --- battery --- */
-  const soc = live ? b.soc : NaN;
-  const cv = i => CFGV[i] === undefined ? CD.def[i] : CFGV[i];      // controller settings, or factory values
-  const sc_ = Number.isNaN(soc) ? COL.off : soc < cv(0) ? COL.bad : soc < cv(1) ? COL.warn : COL.ok;
-  setNum("#soc", Number.isNaN(soc) ? "--" : Math.round(soc) + "%", sc_);
-  $("#ring").style.stroke = sc_;
-  $("#ring").style.strokeDashoffset = 339.3 * (1 - (Number.isNaN(soc) ? 0 : Math.max(0, Math.min(100, soc)) / 100));
-  $("#battSub").textContent = live ? `${fmt(b.v,2," V")}  ·  ${fmt(b.ah,1," Ah used")}` : "--";
-  tint("#tSoc", sc_);
+  /* --- power figures (controller's smoothed values, or worked out here for older firmware) --- */
+  const soc = live ? b.soc : NaN, cur = live ? b.i : NaN;
+  const sol = P ? P.sol : (live && isNum(s.a) && isNum(b.v) ? Math.max(0, s.a * b.v) : NaN);
+  const bat = P ? P.bat : (live && isNum(cur) && isNum(b.v) ? cur * b.v : NaN);
+  const mains = P ? P.mains : (isNum(sol) && isNum(bat) && sol - bat < -15);
+  const van = P ? P.van : (isNum(sol) && isNum(bat) && !mains ? Math.max(0, sol - bat) : NaN);
+  const st = powerState(soc, cur);
+  const fullMin = P ? P.full : (st === 1 && isNum(b.ah) && cur > 0.3 ? Math.abs(b.ah) / cur * 60 : NaN);
 
-  const i = live ? b.i : NaN;
-  const dis = !Number.isNaN(i) && i < -0.05;
-  let ttgTxt = "--";
-  if (dis && b.ttg > 0) ttgTxt = b.ttg >= 1440 ? `${Math.floor(b.ttg/1440)}d ${Math.floor(b.ttg%1440/60)}h` : `${Math.floor(b.ttg/60)}h ${String(Math.round(b.ttg%60)).padStart(2,"0")}m`;
-  setNum("#ttg", ttgTxt, Number.isNaN(i) ? COL.off : COL.ok);
-  $("#ttgSub").textContent = Number.isNaN(i) ? "" : dis ? "at current draw" : "charging / idle";
-  tint("#tTtg", Number.isNaN(i) ? COL.off : COL.ok);
-  setNum("#net", Number.isNaN(i) ? "--" : (i >= 0 ? "+" : "") + i.toFixed(1) + " A", Number.isNaN(i) ? COL.off : COL.ok);
-  $("#pwr").textContent = live && !Number.isNaN(i) && !Number.isNaN(b.v) ? Math.round(i * b.v) + " W" : "";
-  tint("#tNet", Number.isNaN(i) ? COL.off : COL.ok);
+  const si = isNum(soc) ? Math.round(Math.min(100, Math.max(0, soc))) : null;
+  $("#fillR").setAttribute("width", si === null ? 0 : Math.round(84 * si / 100));
+  $("#fillR").setAttribute("fill", st === 2 ? "#9A5B14" : "#16804A");
+  $("#bolt").setAttribute("d", st === 1 ? "M126 18 L117 35 L124 35 L120 49 L131 30 L124 30 Z" : "");
+  const pt = $("#pctT"); pt.setAttribute("x", st === 1 ? 160 : 153);
+  setT("#pctT", si === null ? "--" : si + "%", si === null ? STALEC : "#FFFFFF");
+  setT("#solT", isNum(sol) ? Math.round(sol) + " W" : "--", isNum(sol) ? TXTC : STALEC);
+  if (!isNum(bat)) setT("#netT", "--", STALEC);
+  else { const w = Math.round(bat); setT("#netT", (w > 0 ? "+" : w < 0 ? "−" : "") + Math.abs(w) + " W", w > 0 ? OKC : w < 0 ? WARNC : TXTC); }
+  setT("#vanT", mains ? "Mains" : isNum(van) ? Math.round(van) + " W" : "--", mains || isNum(van) ? TXTC : STALEC);
+  $("#dotS").classList.toggle("off", !(isNum(sol) && sol > 2));
+  $("#dotV").classList.toggle("off", !(isNum(van) && van > 2 && !mains));
 
-  /* --- solar --- */
-  const w = live ? s.w : NaN;
-  setNum("#solW", Number.isNaN(w) ? "--" : Math.round(w) + " W", Number.isNaN(w) ? COL.off : COL.ok);
-  $("#solSub").textContent = live && !Number.isNaN(w) ? `${fmt(s.a,1," A")} · ${MPPT[s.st] || "--"} · ${fmt(s.y,2," kWh")}` : "";
-  tint("#tSol", Number.isNaN(w) ? COL.off : COL.ok);
+  let strip, sbg, sfg;
+  if (st === 0) { strip = "NO BATTERY DATA"; sbg = "#232C37"; sfg = SECC; }
+  else if (st === 3) { strip = "BATTERY FULL"; sbg = "#12301F"; sfg = OKC; }
+  else if (st === 1) { strip = isNum(fullMin) ? "CHARGING · full in " + dur(fullMin) : "CHARGING"; sbg = "#12301F"; sfg = OKC; }
+  else { strip = isNum(b.ttg) && b.ttg > 0 ? "ON BATTERY · " + (b.ttg >= 1440 ? Math.floor(b.ttg / 1440) + " d " + Math.floor(b.ttg % 1440 / 60) + " h" : dur(b.ttg)) + " left" : "ON BATTERY"; sbg = "#33240F"; sfg = WARNC; }
+  $("#stripR").setAttribute("fill", sbg); setT("#stripT", strip, sfg);
 
-  /* --- grey / fridges --- */
-  const grey = live && (t.flags & 1);
-  setNum("#grey", live ? (grey ? "FULL" : "OK") : "--", live ? (grey ? COL.warn : COL.ok) : COL.off);
-  tint("#tGrey", live ? (grey ? COL.warn : COL.ok) : COL.off);
-  const fa = live && (t.lat & 2);
-  for (const [k, id, tid, ci] of [["wae","#wae","#tWae",2],["dom","#dom","#tDom",3]]) {
-    const v = live ? t[k] : NaN, lim = cv(ci) / 10;
-    const c = Number.isNaN(v) ? COL.off : v > lim ? (fa ? COL.bad : COL.warn) : COL.ok;
-    setNum(id, Number.isNaN(v) ? "--" : v.toFixed(1) + "°C", c);
-    $(id + "Sub").textContent = Number.isNaN(v) ? (k === "wae" ? "not in range / no sensor" : "no data") : v > lim ? "warm" : "OK";
-    tint(tid, c);
+  /* --- night line: when will it be full / will it last until the sun is up --- */
+  const sun = sunNow(), SUNI = "M12 4v2M12 18v2M4 12h2M18 12h2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4M12 8.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 1 0 0-7z",
+        MOONI = "M20 14.5A8 8 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5z";
+  let n1 = "", n2 = "", nc = SECC, icon = sun && sun.up ? SUNI : MOONI;
+  if (st === 1 || st === 3) {
+    n1 = st === 3 ? "Battery full" : mains ? "On mains power" : isNum(fullMin) ? "Full by " + clock(Date.now() + fullMin * 60000) : "Charging";
+    n2 = sun ? (sun.up ? "Sun until " + clock(sun.set) : "Sunrise " + clock(sun.nextRise)) : "";
+  } else if (st === 2) {
+    const ends = isNum(b.ttg) && b.ttg > 0 ? Date.now() + b.ttg * 60000 : NaN;
+    n1 = isNum(ends) ? "Lasts till " + clock(ends) : "On battery";
+    // % per hour from the battery's own size: used Ah over the % that is gone
+    const cap = isNum(b.ah) && isNum(soc) && soc < 98 ? Math.abs(b.ah) / ((100 - soc) / 100) : NaN;
+    if (sun && !sun.up) {
+      const hrs = (sun.nextRise - Date.now()) / 3600000;
+      if (isNum(ends) && ends < sun.nextRise) { n2 = "Runs out before sunrise (" + clock(sun.nextRise) + ")"; nc = "#F87171"; }
+      else if (isNum(cap) && cap > 5 && isNum(cur)) {
+        const at = soc - Math.abs(cur) / cap * 100 * hrs;
+        n2 = "About " + Math.max(0, Math.round(at)) + "% at sunrise (" + clock(sun.nextRise) + ")";
+        nc = at < cv(1) ? WARNC : SECC;
+      } else n2 = "Sunrise " + clock(sun.nextRise);
+    } else if (sun) n2 = "Sun until " + clock(sun.set);
+  } else { n1 = live ? "Waiting for battery data" : "Not connected"; }
+  $("#nIcon").setAttribute("d", icon); $("#nIcon").setAttribute("stroke", nc === SECC ? SECC : nc);
+  $("#n1").textContent = n1 || " "; const e2 = $("#n2"); e2.textContent = n2 || " "; e2.style.color = nc;
+
+  /* --- details --- */
+  $("#dV").textContent = fmt(live ? b.v : NaN, 1, " V");
+  $("#dA").textContent = isNum(cur) ? (cur >= 0 ? "+" : "−") + Math.abs(cur).toFixed(1) + " A" : "--";
+  $("#dAh").textContent = isNum(b.ah) && live ? Math.abs(b.ah).toFixed(1) + " Ah" : "--";
+  $("#dSA").textContent = fmt(live ? s.a : NaN, 1, " A");
+  $("#dSt").textContent = live ? (MPPT[s.st] || "--") : "--";
+  $("#dY").textContent = fmt(live ? s.y : NaN, 2, " kWh");
+  const fault = P && ((P.pf & 4) || (P.err > 0 && P.err < 255));
+  const dF = $("#dF"); dF.textContent = !P ? "--" : fault ? (P.err > 0 && P.err < 255 ? "Error " + P.err : "Fault") : "No faults";
+  dF.style.color = !P ? "" : fault ? "var(--bad)" : "var(--ok)";
+  const dR = $("#dR"); dR.textContent = P ? String(P.resets) : "--"; dR.style.color = P && P.resets ? "var(--warn)" : "";
+
+  /* --- grey water chip --- */
+  const gc = $("#greyChip"), grey = live && (t.flags & 1);
+  gc.textContent = live ? (grey ? "Grey FULL" : "Grey OK") : "Grey --"; gc.className = live ? (grey ? "full" : "") : "off";
+
+  /* --- battery trend (24 h history + now) --- */
+  const H = HIST, step = H ? (H.interval || 5) * 60000 : 300000;
+  const tk = (H ? H.fetched : 0) + "|" + (si === null ? "" : si) + "|" + cv(1);
+  if (tk !== trendKey) {
+    trendKey = tk;
+    const vals = H ? H.series[2].slice() : [];
+    if (si !== null) vals.push(si);
+    const fin = vals.filter(isNum), svg = $("#trend");
+    if (fin.length < 2) svg.innerHTML = `<text x="163" y="32" text-anchor="middle" fill="#8A96A3" font-size="12">No history yet</text>`;
+    else {
+      const lo = Math.max(0, Math.min(40, Math.floor(Math.min(...fin) / 10) * 10)), hi = 100;
+      const d = spark(vals, 326, 56, lo, hi), ly = 2 + (hi - cv(1)) / (hi - lo) * 52;
+      let li = -1; vals.forEach((v, i) => { if (isNum(v) && (li < 0 || v < vals[li])) li = i; });
+      const lx = vals.length > 1 ? li * 326 / (vals.length - 1) : 0, lyy = 2 + (hi - vals[li]) / (hi - lo) * 52;
+      svg.innerHTML = `<line x1="0" x2="326" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="#5B6773" stroke-dasharray="3 4"/>`
+        + `<path d="${d} L326 56 L0 56 Z" fill="#4AA3FF" fill-opacity="0.12"/><path d="${d}" fill="none" stroke="#4AA3FF" stroke-width="2" stroke-linejoin="round"/>`
+        + `<circle cx="${lx.toFixed(1)}" cy="${lyy.toFixed(1)}" r="3" fill="#FBBF24"/>`;
+      const tLow = H ? H.newest - (H.series[2].length - 1 - li) * step : Date.now();
+      $("#tLow").textContent = "low " + Math.round(vals[li]) + "% at " + clock(Math.min(Date.now(), tLow)).replace(/^\w{3} /, "");
+      const span = H ? (vals.length - 1) * step : 0, t0 = Date.now() - span, lab = $("#tLab").children;
+      for (let k = 0; k < 3; k++) lab[k].textContent = span ? clock(t0 + span * k / 3).replace(/:\d\d /, " ").replace(/^\w{3} /, "") : "";
+    }
   }
+
+  /* --- fridges --- */
+  const fa = live && (t.lat & 2);
+  for (const [k, id, ci, ser] of [["wae", "#fW", 2, 0], ["dom", "#fD", 3, 1]]) {
+    const v = live ? t[k] : NaN, lim = cv(ci) / 10, box = $(id);
+    trackWarm(k, v, lim);
+    const warm = isNum(v) && v > lim, hist = H ? H.series[ser].slice() : [];
+    if (isNum(v)) hist.push(v);
+    const fin = hist.filter(isNum);
+    const col = !isNum(v) ? STALEC : warm ? (fa ? "#F87171" : WARNC) : OKC;
+    box.querySelector(".fbar").style.background = col;
+    const ft = box.querySelector(".ft"); ft.textContent = isNum(v) ? v.toFixed(1) + "°C" : "--"; ft.style.color = !isNum(v) ? STALEC : warm ? col : TXTC;
+    let sub, sc_ = SECC, sw = 400;
+    if (!isNum(v)) sub = k === "wae" ? "No signal" : "No data";
+    else if (warm && fa) { sub = "ALARM · over " + lim.toFixed(1) + "°"; sc_ = "#F87171"; sw = 600; }
+    else if (warm) {
+      const left = warmSince[k] ? cv(4) - (Date.now() - warmSince[k]) / 60000 : NaN;
+      sub = isNum(left) ? "WARM · alarm in " + Math.max(1, Math.ceil(left)) + " m" : "WARM"; sc_ = WARNC; sw = 600;
+    } else sub = fin.length > 1 ? Math.min(...fin).toFixed(1) + " to " + Math.max(...fin).toFixed(1) + "° in 24 h" : "OK";
+    const fs = box.querySelector(".fs"); fs.textContent = sub; fs.style.color = sc_; fs.style.fontWeight = sw;
+    box.querySelector(".lim").textContent = "limit " + lim.toFixed(0) + "°";
+    const fk = (H ? H.fetched : 0) + "|" + (isNum(v) ? v.toFixed(1) : "") + "|" + lim + "|" + warm;
+    if (box._k !== fk) {
+      box._k = fk;
+      const lo = Math.min(0, ...fin), hi = Math.max(lim + 3, ...fin) ;
+      const y = 2 + (hi - lim) / (hi - lo) * 36;
+      box.querySelector("svg").innerHTML = (fin.length > 1 ? `<path d="${spark(hist, 150, 40, lo, hi)}" fill="none" stroke="${warm ? WARNC : "#7CC4FF"}" stroke-width="1.8" stroke-linejoin="round"/>` : "")
+        + `<line x1="0" x2="150" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#F87171" stroke-opacity="0.55" stroke-dasharray="3 3"/>`;
+    }
+  }
+
+  /* --- today --- */
+  const solIn = live && isNum(s.y) ? s.y : NaN, used = P && isNum(P.vanWh) ? P.vanWh / 1000 : NaN;
+  $("#tdSol").textContent = isNum(solIn) ? solIn.toFixed(2) + " kWh" : "--";
+  $("#tdVan").textContent = isNum(used) ? used.toFixed(2) + " kWh" : "--";
+  const bal = isNum(solIn) && isNum(used) ? solIn - used : NaN, be = $("#tdBal");
+  be.textContent = isNum(bal) ? (bal >= 0 ? "+" : "−") + Math.abs(bal).toFixed(2) + " kWh" : "--";
+  be.style.color = isNum(bal) ? (bal >= 0 ? "var(--ok)" : "var(--warn)") : "";
+  $("#tdBalL").textContent = isNum(bal) ? (bal >= 0 ? "Ahead today" : "Behind today") : "Balance";
+  $("#tdLow").textContent = P && isNum(P.low) ? Math.round(P.low) + "%" : "--";
+  $("#tdLowL").textContent = P && !(P.pf & 2) && isNum(P.low) ? "Lowest in 24 h" : "Lowest overnight";
 
   renderBanner(live);
   renderLevel(live);
@@ -583,23 +947,42 @@ function alarmWhy(k){
     if ((m & 8) && Number.isNaN(t.dom)) o.push("Dometic probe");
     return o.length ? "no data from " + o.join(", ") : "a sensor stopped reporting";
   }
+  if (k === 5) {
+    const P = S.p;
+    if (P && P.err > 0 && P.err < 255) return "solar charger error " + P.err;
+    return "a Victron device reports a fault";
+  }
   return "tank full, time to empty it";
 }
 
+function warmMsg(){                                 // "WAECO WARM: ALARM IN 12m", before the alarm fires
+  const t = S.t || {};
+  let best = null;
+  for (const [k, nm, ci] of [["wae", "WAECO", 2], ["dom", "DOMETIC", 3]]) {
+    const v = t[k], lim = cv(ci) / 10;
+    if (!isNum(v) || v <= lim) continue;
+    const left = warmSince[k] ? cv(4) - (Date.now() - warmSince[k]) / 60000 : NaN;
+    const m = nm + " WARM" + (isNum(left) ? ": ALARM IN " + Math.max(1, Math.ceil(left)) + "m" : "");
+    if (!best || (isNum(left) && left < best.left)) best = { m, left: isNum(left) ? left : 1e9 };
+  }
+  return best ? best.m : "";
+}
 function renderBanner(live){
   const el = $("#banner"), txt = $("#bannerTxt"), btns = $("#bannerBtns"), t = S.t;
   btns.innerHTML = "";
   if (!live) { el.className = "off"; txt.textContent = S.on ? "No data" : "Not connected"; return; }
   const sounding = t.lat & ~t.sil;
-  let top = -1; for (let k = 0; k < 5; k++) if (sounding & (1 << k)) { top = k; break; }
+  let top = -1; for (let k = 0; k < NAL; k++) if (sounding & (1 << k)) { top = k; break; }
   if (top >= 0) {
     el.className = "alarm"; txt.textContent = ALARMS[top] + ": " + alarmWhy(top);
     for (const [lbl, n] of [["30 min", 1], ["Until cleared", 2]]) {
       const bt = document.createElement("button"); bt.textContent = lbl; bt.onclick = () => sendCmd(n); btns.appendChild(bt);
     }
   } else if (t.lat) {
-    const names = []; for (let k = 0; k < 5; k++) if (t.lat & (1 << k)) names.push(SHORT[k]);
+    const names = []; for (let k = 0; k < NAL; k++) if (t.lat & (1 << k)) names.push(SHORT[k]);
     el.className = "mute"; txt.textContent = "SILENCED: " + names.join(", ");
+  } else if (warmMsg()) {
+    el.className = "warn"; txt.textContent = warmMsg();
   } else if (Number.isNaN(S.b.soc)) {
     el.className = "warn"; txt.textContent = "SENSOR LOST: SHUNT";
   } else { el.className = ""; txt.textContent = t.quiet ? "ALL OK \u00B7 quiet hours" : "ALL OK"; }
@@ -654,7 +1037,7 @@ function renderLevel(live){
 const CD = {
   def: [50, 55, 80, 80, 20, 10, 30, 31, 1, 10, 30, 120, 2, 0, 1320, 360, 1, 5, 11, 100],
   min: [10, 15, -50, -50, 1, 0, 1, 0, 0, 0, 5, 10, 1, 0, 0, 0, 0, 1, 0, 10],
-  max: [90, 95, 250, 250, 180, 180, 240, 31, 1, 300, 900, 3600, 50, 1, 1439, 1439, 1, 120, 15, 100],
+  max: [90, 95, 250, 250, 180, 180, 240, 63, 1, 300, 900, 3600, 50, 1, 1439, 1439, 1, 120, 15, 100],
 };
 const GROUPS = [
   { t: "Battery alarms", n: "Each one clears 3 points above its level.", rows: [
@@ -669,7 +1052,7 @@ const GROUPS = [
   { t: "Which alarms are on", rows: [
     { k: "bit", i: 7, b: 0, l: "Battery critical" }, { k: "bit", i: 7, b: 1, l: "Fridge warm" },
     { k: "bit", i: 7, b: 2, l: "Battery low" }, { k: "bit", i: 7, b: 3, l: "Grey water full" },
-    { k: "bit", i: 7, b: 4, l: "Sensor lost" } ] },
+    { k: "bit", i: 7, b: 4, l: "Sensor lost" }, { k: "nbit", i: 7, b: 5, l: "Victron fault (needs controller v1.4)" } ] },
   { t: "Silencing and sound", rows: [
     { k: "stp", i: 6, l: "Silence lasts", u: "min", step: 5 },
     { k: "tog", i: 8, l: "Buzzer on the controller" } ] },
@@ -737,11 +1120,12 @@ function buildCfg(){
         const bump = (dir, mult) => { const v = CFGV[r.i]; if (v !== undefined) cfgSet(r.i, v + dir * r.step * mult); };
         hold(m, mult => bump(-1, mult)); hold(p, mult => bump(1, mult));
         ctl.append(m, row._v, p); row.appendChild(ctl);
-      } else if (r.k === "tog" || r.k === "bit") {
+      } else if (r.k === "tog" || r.k === "bit" || r.k === "nbit") {
         const cb = el("input"); cb.type = "checkbox"; cb.className = "sw"; row._cb = cb;
         cb.onchange = () => {
           const v = CFGV[r.i]; if (v === undefined) { cb.checked = !cb.checked; return; }
-          cfgSet(r.i, r.k === "bit" ? (cb.checked ? v | (1 << r.b) : v & ~(1 << r.b)) : (cb.checked ? 1 : 0));
+          cfgSet(r.i, r.k === "bit" ? (cb.checked ? v | (1 << r.b) : v & ~(1 << r.b))
+                    : r.k === "nbit" ? (cb.checked ? v & ~(1 << r.b) : v | (1 << r.b)) : (cb.checked ? 1 : 0));
         };
         row.appendChild(cb);
       } else if (r.k === "time") {
@@ -777,7 +1161,7 @@ function cfgRefresh(){
     if (r.dep !== undefined) row.style.opacity = CFGV[r.dep] === 0 ? 0.5 : "";
     if (row._v && r.k !== "rng") row._v.textContent = fmtRow(r, v);
     if (r.k === "rng") { row._v.textContent = known ? v + " " + r.u : "--"; if (known && document.activeElement !== row._t) row._t.value = v; }
-    if (row._cb) row._cb.checked = known && (r.k === "bit" ? (v & (1 << r.b)) !== 0 : v !== 0);
+    if (row._cb) row._cb.checked = known && (r.k === "bit" ? (v & (1 << r.b)) !== 0 : r.k === "nbit" ? (v & (1 << r.b)) === 0 : v !== 0);
     if (r.k === "time" && known && document.activeElement !== row._t) row._t.value = fmtMin(v);
     row._ok.classList.toggle("on", !!savedAt[r.i] && Date.now() - savedAt[r.i] < 1600);
   }
@@ -796,6 +1180,36 @@ $("#sDemo").onchange = () => {
 const tolShow = () => { $("#tolV").textContent = cfg.tol.toFixed(1) + "°"; };
 $("#tolM").onclick = () => { cfg.tol = Math.max(0.1, Math.round((cfg.tol - 0.1) * 10) / 10); save(); tolShow(); };
 $("#tolP").onclick = () => { cfg.tol = Math.min(2, Math.round((cfg.tol + 0.1) * 10) / 10); save(); tolShow(); };
+$("#btnWifi").onclick = async () => {
+  if (!S.p && !cfg.demo) { setPill("Needs controller v1.4"); return; }
+  if (!unlocked()) { setPill("Enter the PIN first"); return; }
+  if (cfg.demo || await sendBytes([0x16])) { const b = $("#btnWifi"); b.textContent = "On for 15 min"; setTimeout(() => { b.textContent = "Turn on"; }, 8000); }
+};
+$("#btnRst").onclick = async () => {
+  if (!unlocked()) { setPill("Enter the PIN first"); return; }
+  if (cfg.demo) { S.p && (S.p.resets = 0); return; }
+  await sendBytes([0x15]);
+};
+function ctlRefresh(){
+  const P = S.p, e = $("#rstTxt");
+  e.textContent = P ? (P.resets ? P.resets + " since last cleared (crash, watchdog or power dip)" : "None") : (S.on ? "Needs controller v1.4" : "--");
+  e.className = "gn" + (P && P.resets ? " bad" : "");
+  $("#locTxt").textContent = cfg.lat.toFixed(2) + ", " + cfg.lon.toFixed(2) + (cfg.locSet ? "" : " (default, Gippsland)");
+}
+$("#btnLoc").onclick = () => {
+  const t = $("#locTxt");
+  if (!navigator.geolocation) { t.textContent = "Location not available here: type it below"; return; }
+  t.textContent = "Finding…";
+  navigator.geolocation.getCurrentPosition(pos => {
+    cfg.lat = Math.round(pos.coords.latitude * 100) / 100; cfg.lon = Math.round(pos.coords.longitude * 100) / 100; cfg.locSet = true; save();
+    $("#sLat").value = cfg.lat; $("#sLon").value = cfg.lon; ctlRefresh();
+  }, () => { t.textContent = "Could not get the location: type it below"; }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 3600000 });
+};
+for (const id of ["#sLat", "#sLon"]) $(id).onchange = () => {
+  const la = +$("#sLat").value, lo = +$("#sLon").value;
+  if (Number.isFinite(la) && Number.isFinite(lo) && Math.abs(la) <= 90 && Math.abs(lo) <= 180 && $("#sLat").value !== "" && $("#sLon").value !== "") { cfg.lat = la; cfg.lon = lo; cfg.locSet = true; save(); ctlRefresh(); }
+};
+setInterval(() => { if ($("#settings").classList.contains("on")) ctlRefresh(); }, 1000);
 let resetArm = 0;
 $("#btnReset").onclick = () => {
   const b = $("#btnReset");
@@ -807,17 +1221,17 @@ $("#btnReset").onclick = () => {
 };
 
 /* ---------------- history graphs ---------------- */
-let HIST = null, HB = null, histTimer = 0;
+let HIST = null, HB = null, histTimer = 0, histNser = 3;
 try {
   const j = JSON.parse(localStorage.getItem("ch") || "null");
-  if (j && j.series) { j.series = j.series.map(a => a.map(v => v === null ? NaN : v)); HIST = j; }
+  if (j && j.series) { j.series = j.series.map(a => a.map(v => v === null ? NaN : v)); while (j.series.length < 4) j.series.push([]); HIST = j; }
 } catch (_) {}
 
 function histRequest(){
   histSince = Date.now(); HB = null;
-  sendBytes([0x14]);
+  sendBytes(histNser === 4 ? [0x14, 1] : [0x14]);
   clearTimeout(histTimer);
-  histTimer = setTimeout(() => { if (HB) histDone(); else histRender(); }, 12000);
+  histTimer = setTimeout(() => { if (HB) histDone(); else histRender(); }, 20000);
   histRender();
 }
 function histDone(){
@@ -861,9 +1275,10 @@ function chartSvg(vals, tEnd, stepMs, lines, fixedMax){
   return s;
 }
 
-function chartCard(box, title, unit, vals, tEnd, stepMs, lines, fixedMax){
+function chartCard(box, title, unit, vals, tEnd, stepMs, lines, fixedMax, dp){
+  if (dp === undefined) dp = 1;
   const fin = vals.filter(Number.isFinite), last = fin.length ? vals.slice().reverse().find(Number.isFinite) : NaN;
-  const f = v => Number.isFinite(v) ? v.toFixed(1) + unit : "--";
+  const f = v => Number.isFinite(v) ? v.toFixed(dp) + unit : "--";
   box.innerHTML = `<div class="ct"><b>${title}</b><span class="cs">now ${f(last)} · min ${f(Math.min(...fin))} · max ${f(Math.max(...fin))}</span></div><div class="tip">&nbsp;</div>` + chartSvg(vals, tEnd, stepMs, lines, fixedMax);
   const svg = box.querySelector("svg"), tip = box.querySelector(".tip"), cur = svg.querySelector(".cur");
   if (!cur) return;
@@ -875,7 +1290,7 @@ function chartCard(box, title, unit, vals, tEnd, stepMs, lines, fixedMax){
     if (i < 0 || i >= vals.length) { tip.innerHTML = "&nbsp;"; cur.setAttribute("opacity", 0); return; }
     const tt = tEnd - (vals.length - 1 - i) * stepMs, cx = 34 + (tt - t0) / span * (340 - 34 - 8);
     cur.setAttribute("x1", cx); cur.setAttribute("x2", cx); cur.setAttribute("opacity", 0.6);
-    tip.textContent = hh(tt) + "   " + (Number.isFinite(vals[i]) ? vals[i].toFixed(1) + unit : "no reading");
+    tip.textContent = hh(tt) + "   " + (Number.isFinite(vals[i]) ? vals[i].toFixed(dp) + unit : "no reading");
   };
   svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move);
 }
@@ -885,12 +1300,15 @@ function histRender(){
   if (HB) st.textContent = "Loading from the controller…";
   else if (HIST) st.textContent = (can ? "Updated " : "Saved copy from ") + hh(HIST.fetched) + " · last 24 h";
   else st.textContent = can ? "Asking the controller…" : "Connect to see the graphs";
-  const H = HIST || { series: [[], [], []], newest: Date.now(), interval: 5 }, step = (H.interval || 5) * 60000;
+  const H = HIST || { series: [[], [], [], []], newest: Date.now(), interval: 5 }, step = (H.interval || 5) * 60000;
   const w = CFGV[2] === undefined ? 8 : CFGV[2] / 10, d = CFGV[3] === undefined ? 8 : CFGV[3] / 10;
   const crit = CFGV[0] === undefined ? 50 : CFGV[0], low = CFGV[1] === undefined ? 55 : CFGV[1];
   chartCard($("#chW"), "Waeco", "°C", H.series[0], H.newest, step, [{ y: w, c: "#FBBF24" }]);
   chartCard($("#chD"), "Dometic", "°C", H.series[1], H.newest, step, [{ y: d, c: "#FBBF24" }]);
   chartCard($("#chB"), "Battery", "%", H.series[2], H.newest, step, [{ y: crit, c: "#F87171" }, { y: low, c: "#FBBF24" }], 100);
+  const sw = H.series[3] || [];
+  if (sw.some(Number.isFinite)) chartCard($("#chS"), "Solar", " W", sw, H.newest, step, [], undefined, 0);
+  else $("#chS").innerHTML = `<div class="ct"><b>Solar</b><span class="cs">${histNser === 4 ? "no readings yet" : "needs controller firmware v1.4"}</span></div>`;
 }
 $("#btnHist").onclick = () => { if (S.on || cfg.demo) histRequest(); else histRender(); };
 setInterval(() => { if ($("#history").classList.contains("on") && S.on && !HB && Date.now() - histSince > 5 * 60000) histRequest(); }, 20000);
@@ -900,6 +1318,7 @@ function showTab(name){
   document.querySelectorAll("main section").forEach(sx => sx.classList.toggle("on", sx.id === name));
   if (name === "settings") {
     $("#sTrack").value = cfg.track; $("#sHitch").value = cfg.hitch; $("#sSound").checked = cfg.sound; $("#sDemo").checked = cfg.demo; tolShow();
+    $("#sLat").value = cfg.lat; $("#sLon").value = cfg.lon; ctlRefresh();
     if (S.on && !cfgAll() && Date.now() - cfgAsked > 3000) reqCfg();
     cfgRefresh();
   }
@@ -939,7 +1358,14 @@ function startDemo(){
     HIST = { count: n, interval: 5, newest: now, fetched: now, series: [
       Array.from({ length: n }, (_, i) => 4.5 + 1.2 * Math.sin(i / 14) + (i > 200 && i < 215 ? (i - 200) / 3 : 0)),
       Array.from({ length: n }, (_, i) => i < 40 ? NaN : 5 + 0.9 * Math.cos(i / 9)),
-      Array.from({ length: n }, (_, i) => 92 - i * 0.12 + 6 * Math.max(0, Math.sin(i / 30))) ] };
+      Array.from({ length: n }, (_, i) => 92 - i * 0.12 + 6 * Math.max(0, Math.sin(i / 30))),
+      Array.from({ length: n }, (_, i) => Math.max(0, 260 * Math.sin((i - 60) / 288 * 2 * Math.PI * 1.0))) ] };
+    histNser = 4;
+    const h = 3600000;
+    LOG = [{ a: 4, e: 1, t: now - 27 * h }, { a: 4, e: 5, t: now - 27 * h + 120000 }, { a: 3, e: 1, t: now - 18 * h },
+           { a: 3, e: 3, t: now - 18 * h + 60000 }, { a: 1, e: 1, t: now - 6 * h }, { a: 1, e: 2, t: now - 6 * h + 300000 },
+           { a: 1, e: 5, t: now - 6 * h + 17 * 60000 }];
+    logRender();
   }
   demoTimer = setInterval(() => {
     const t = (Date.now() - demoT0) / 1000;
@@ -948,21 +1374,23 @@ function startDemo(){
     const rr = -roll * Math.PI / 180, pp = -pitch * Math.PI / 180;     // invert attitude() maths
     S.a = [0,1,2].map(k => up[k] * Math.cos(rr) * Math.cos(pp) + F[k] * Math.sin(pp) + R[k] * Math.sin(rr));
     S.buf.push(S.a); if (S.buf.length > 10) S.buf.shift();
-    S.b = { soc: 62 - (t / 600), v: 12.8, i: -8.4, ah: 71.2, ttg: 560 };
-    S.s = { w: 140 + 20 * Math.sin(t / 5), a: 11.2, y: 0.84, st: 3 };
+    S.b = { soc: 64 - (t / 600), v: 13.1, i: -3.66, ah: -72, ttg: 800 };
+    S.s = { w: 13, a: 0.92, y: 1.32, st: 2 };
+    S.p = { sol: 12, van: 60, mains: false, bat: -48, full: NaN, vanWh: 1610, low: 71, pf: 3, resets: 0, logTotal: 7, err: 0, t: Date.now() };
     if (t > 20 && !demoLat) demoLat = 8;            // grey water alarm after 20 s
-    S.t = { wae: 5.2, dom: 4.1, flags: demoLat ? 1 : 0, lat: demoLat, sil: demoSil, shown: -1, quiet: false };
+    S.t = { wae: t > 8 ? 8.6 : 7.5, dom: 4.1, flags: demoLat ? 1 : 0, lat: demoLat, sil: demoSil, shown: -1, quiet: false };
     S.lastRx = Date.now();
   }, 200);
 }
-function stopDemo(){ clearInterval(demoTimer); demoLat = demoSil = 0; S.t = {}; S.buf = []; S.a = null; }
+function stopDemo(){ clearInterval(demoTimer); demoLat = demoSil = 0; S.t = {}; S.buf = []; S.a = null; S.p = null; }
 function demoSilence(n){ if (!demoLat) return; demoSil = demoLat; }
 
+logRender();
 if (cfg.demo) startDemo();
 setInterval(() => { try { render(); } catch (e) { dbgErr("render: " + e.message); } }, 200);
 try { render(); } catch (e) { dbgErr("render: " + e.message); }
 setInterval(() => {
-  $("#diag").textContent = "build 7 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
+  $("#diag").textContent = "build 8 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
     + " \u00B7 " + (S.on ? "connected" : "not connected") + " \u00B7 packets " + DBG.n
     + (DBG.n ? " (" + Math.round((Date.now() - DBG.ev) / 1000) + "s ago)" : "");
 }, 500);

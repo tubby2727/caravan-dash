@@ -6,17 +6,19 @@ import java.util.Locale;
 
 /** Latest values from the controller, shared by the service, the widget and the plugin. */
 final class CaravanState {
-    static final String[] ALARMS = {"BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER", "SENSOR LOST"};
+    static final String[] ALARMS = {"BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER", "SENSOR LOST", "VICTRON FAULT"};
 
     static volatile float soc = Float.NaN, volts = Float.NaN, amps = Float.NaN, ah = Float.NaN, ttg = Float.NaN;
     static volatile float solarW = Float.NaN, solarA = Float.NaN, yieldKwh = Float.NaN;
     static volatile float wae = Float.NaN, dom = Float.NaN;
     static volatile int mppt = 255, flags = 0, latched = 0, silenced = 0, shown = -1;
+    /** v1.4 power packet: MPPT error code (0 none, 255 no data) and flags (bit2 = Victron fault now). */
+    static volatile int mpptErr = 255, powerFlags = 0;
     static volatile long lastRx = 0;
     static volatile boolean connected = false;
     static volatile String conn = "searching";
 
-    private static final byte[][] raw = new byte[6][];
+    private static final byte[][] raw = new byte[8][];
     /** Latest copy of every controller setting (index order as in caravan_ble.yaml), Integer.MIN_VALUE = not received. */
     static final int[] cfg = new int[20];
     static {
@@ -26,14 +28,14 @@ final class CaravanState {
     private CaravanState() {}
 
     static synchronized void store(int idx, byte[] v) {
-        if (idx >= 0 && idx < 4) raw[idx] = v;
+        if ((idx >= 0 && idx < 4) || idx == 6) raw[idx] = v;
         if (idx == 4 && v != null && v.length >= 3 && (v[0] & 0xFF) < cfg.length) {
             cfg[v[0] & 0xFF] = (short) ((v[1] & 0xFF) | (v[2] << 8));
         }
     }
 
     static synchronized byte[] get(int idx) {
-        return (idx >= 0 && idx < 4) ? raw[idx] : null;
+        return ((idx >= 0 && idx < 4) || idx == 6) ? raw[idx] : null;
     }
 
     /** idx: 0 level (not decoded here), 1 battery, 2 solar, 3 status. Same layout as caravan_ble.yaml. */
@@ -50,6 +52,10 @@ final class CaravanState {
             solarA = s16(b, 2, 100f);
             yieldKwh = b.getFloat(4);
             mppt = v[8] & 0xFF;
+        } else if (idx == 6 && v.length >= 17) {
+            powerFlags = v[12] & 0xFF;
+            mpptErr = v[16] & 0xFF;
+            return;                                   // not counted as "fresh" data: the status packet does that
         } else if (idx == 3 && v.length >= 8) {
             wae = s16(b, 0, 10f);
             dom = s16(b, 2, 10f);
@@ -78,8 +84,8 @@ final class CaravanState {
 
     /** Lowest-numbered alarm that is latched and not silenced, or -1. */
     static int topAlarm() {
-        int s = latched & ~silenced & 0x1F;
-        for (int i = 0; i < 5; i++) {
+        int s = latched & ~silenced & 0x3F;
+        for (int i = 0; i < ALARMS.length; i++) {
             if (((s >> i) & 1) != 0) return i;
         }
         return -1;
@@ -151,6 +157,9 @@ final class CaravanState {
                 String l = lostList();
                 return l.isEmpty() ? "A sensor has stopped reporting" : "No data from: " + l;
             }
+            case 5:
+                if (mpptErr > 0 && mpptErr < 255) return "Solar charger error " + mpptErr + ". Check the VictronConnect app for details";
+                return "A Victron device (battery shunt or solar charger) reports a fault";
             default:
                 return "Grey water tank is full, time to empty it";
         }

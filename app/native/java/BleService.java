@@ -59,6 +59,8 @@ public class BleService extends Service {
             UUID.fromString("c0a7a5e0-0005-4c1b-9f6e-5a1d0c4a0001"),   // status
             UUID.fromString("c0a7a5e0-0007-4c1b-9f6e-5a1d0c4a0001"),   // settings
             UUID.fromString("c0a7a5e0-0008-4c1b-9f6e-5a1d0c4a0001"),   // history
+            UUID.fromString("c0a7a5e0-0009-4c1b-9f6e-5a1d0c4a0001"),   // power (v1.4)
+            UUID.fromString("c0a7a5e0-000a-4c1b-9f6e-5a1d0c4a0001"),   // alarm log (v1.4)
     };
     static final UUID CMD = UUID.fromString("c0a7a5e0-0006-4c1b-9f6e-5a1d0c4a0001");
     static final UUID CCC = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
@@ -390,7 +392,7 @@ public class BleService extends Service {
         CaravanState.decode(idx, v);
         Listener l = listener;
         if (l != null) l.onPacket(idx, v);
-        if (idx == 3) evaluateAlarm();
+        if (idx == 3 || idx == 6) evaluateAlarm();
         // keep the controller's clock right (it has no clock of its own)
         if (CaravanState.connected && System.currentTimeMillis() - lastClockSync > 30 * 60 * 1000L) sendClock();
     }
