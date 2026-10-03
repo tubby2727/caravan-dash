@@ -84,6 +84,9 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
 
 <div id="banner" class="off"><span class="grow" id="bannerTxt">Not connected</span><span id="bannerBtns"></span></div>
 
+<div id="diag" style="margin:0 16px 8px;font-size:11px;color:var(--sec)"></div>
+<div id="dbg" hidden style="margin:0 16px 8px;padding:8px 10px;border-radius:10px;background:#4a1d1d;color:#fecaca;font-size:12px;word-break:break-word"></div>
+
 <nav class="tabs">
   <button data-t="dash" class="on">Dash</button>
   <button data-t="level">Level</button>
@@ -171,6 +174,13 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
 
 <script>
 "use strict";
+const DBG = { n: 0, ev: 0 };
+function dbgErr(m){
+  const d = document.getElementById("dbg");
+  if (d) { d.hidden = false; d.textContent = "Error: " + String(m).slice(0, 200); }
+}
+window.addEventListener("error", e => dbgErr((e.message || "error") + " (line " + e.lineno + ")"));
+window.addEventListener("unhandledrejection", e => dbgErr("Promise: " + ((e.reason && e.reason.message) || e.reason)));
 /* ---------------- BLE protocol (matches caravan_ble.yaml) ---------------- */
 const U = {
   svc:    "c0a7a5e0-0001-4c1b-9f6e-5a1d0c4a0001",
@@ -224,7 +234,7 @@ const CB = NATIVE ? Capacitor.registerPlugin("CaravanBle") : null;
 const KEYS = ["level", "batt", "solar", "status"];
 const CONNTXT = { connected:"Connected", searching:"Searching…", connecting:"Connecting…", noperm:"Allow Bluetooth", "bt off":"Bluetooth off" };
 function b64dv(b){ const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new DataView(u.buffer); }
-function nativePacket(i, b){ if (!b || !KEYS[i]) return; dec[KEYS[i]](b64dv(b)); S.lastRx = Date.now(); }
+function nativePacket(i, b){ if (!b || !KEYS[i]) return; dec[KEYS[i]](b64dv(b)); S.lastRx = Date.now(); DBG.n++; DBG.ev = Date.now(); }
 function nativeConn(st){ S.on = st === "connected"; setPill(CONNTXT[st] || st, S.on); }
 async function nativeSnapshot(){
   try { const r = await CB.snapshot(); for (let i = 0; i < 4; i++) nativePacket(i, r["p" + i]); nativeConn(r.state); } catch (_) {}
@@ -503,6 +513,7 @@ if (NATIVE) {
   nativeInit();
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") nativeSnapshot(); });
   setPill("Searching…");
+  setInterval(() => { if (Date.now() - DBG.ev > 3000) nativeSnapshot(); }, 1500);
 }
 if (!NATIVE && !("bluetooth" in navigator)) { $("#btnConn").textContent = "No Bluetooth"; $("#btnConn").disabled = true; $("#bannerTxt").textContent = "Open in Chrome on Android"; }
 
@@ -531,8 +542,13 @@ function stopDemo(){ clearInterval(demoTimer); demoLat = demoSil = 0; S.t = {}; 
 function demoSilence(n){ if (!demoLat) return; demoSil = demoLat; }
 
 if (cfg.demo) startDemo();
-setInterval(render, 200);
-render();
+setInterval(() => { try { render(); } catch (e) { dbgErr("render: " + e.message); } }, 200);
+try { render(); } catch (e) { dbgErr("render: " + e.message); }
+setInterval(() => {
+  $("#diag").textContent = "build 2 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
+    + " \u00B7 " + (S.on ? "connected" : "not connected") + " \u00B7 packets " + DBG.n
+    + (DBG.n ? " (" + Math.round((Date.now() - DBG.ev) / 1000) + "s ago)" : "");
+}, 500);
 if (!NATIVE && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
 </body>
