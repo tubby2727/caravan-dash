@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0F14">
+<title>Caravan</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#0B0F14;--tile:#151B23;--line:#232C37;--txt:#F2F5F8;--sec:#8A96A3;
+  --ok:#4ADE80;--warn:#FBBF24;--bad:#F87171;--alarm:#DC2626;--stale:#5B6773;--acc:#4AA3FF;
+  --r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{min-height:100vh;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+header{display:flex;align-items:center;gap:10px;padding:12px 16px}
+.brand{font-weight:700;font-size:18px;letter-spacing:.3px;flex:1}
+#pill{font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--line);color:var(--sec)}
+#pill.on{background:#12301F;color:var(--ok)}
+.btn{background:var(--acc);color:#04121f;font-weight:700;padding:9px 14px;border-radius:12px}
+.btn.ghost{background:var(--tile);color:var(--txt);border:1px solid var(--line)}
+.icon{width:38px;height:38px;border-radius:12px;background:var(--tile);border:1px solid var(--line);font-size:18px}
+#banner{margin:0 16px 10px;padding:12px 14px;border-radius:14px;background:#12301F;color:var(--ok);font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#banner.warn{background:#4a3200;color:var(--warn)}
+#banner.mute{background:#2D2D2D;color:var(--warn)}
+#banner.alarm{background:var(--alarm);color:#fff;font-size:20px}
+#banner.off{background:var(--tile);color:var(--sec)}
+#banner .grow{flex:1;min-width:120px}
+#banner button{background:rgba(255,255,255,.18);padding:8px 12px;border-radius:10px;font-size:14px;font-weight:700;color:#fff}
+.tabs{display:flex;gap:8px;margin:0 16px 12px}
+.tabs button{flex:1;padding:11px;border-radius:12px;background:var(--tile);border:1px solid var(--line);font-weight:600;color:var(--sec)}
+.tabs button.on{color:var(--txt);border-color:var(--acc);box-shadow:inset 0 -3px 0 var(--acc)}
+main{padding:0 16px 24px;max-width:820px;margin:0 auto}
+section{display:none}
+section.on{display:block}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--tile);border:1px solid var(--line);border-radius:var(--r);padding:14px;position:relative;overflow:hidden}
+.tile::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 4px 4px 0;background:var(--c,var(--stale))}
+.tile.span{grid-column:1/-1}
+.lbl{font-size:12px;color:var(--sec);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+.val{font-size:34px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.val small{font-size:16px;color:var(--sec);font-weight:600;margin-left:3px}
+.sub{font-size:13px;color:var(--sec);margin-top:2px}
+.stale{color:var(--stale)!important}
+.hero{display:flex;align-items:center;gap:18px}
+.hero svg{width:150px;height:150px;flex:none}
+.hero .big{font-size:56px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.ring-bg{stroke:var(--line)}
+#ring{transition:stroke-dashoffset .6s,stroke .3s}
+
+/* level */
+.lvl-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+#bubble{width:min(78vw,340px);height:min(78vw,340px)}
+.lv2{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.lv2 .val{font-size:44px}
+.word{font-weight:800;font-size:17px;margin-top:2px}
+#hint{font-size:20px;font-weight:700;text-align:center;min-height:28px}
+.row{display:flex;gap:10px;width:100%}
+.row .btn{flex:1}
+.note{color:var(--sec);font-size:13px;text-align:center}
+#needcal{background:var(--tile);border:1px dashed var(--acc);border-radius:var(--r);padding:16px;text-align:center;width:100%}
+
+dialog{background:var(--tile);color:var(--txt);border:1px solid var(--line);border-radius:20px;padding:20px;width:min(92vw,420px)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog h3{margin:0 0 8px}
+dialog p{color:var(--sec);font-size:14px;line-height:1.45}
+.field{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:12px 0}
+.field input[type=number]{width:100px;background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:16px;text-align:right}
+.field input[type=checkbox]{width:22px;height:22px}
+.err{color:var(--bad);font-size:14px;min-height:20px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Caravan</div>
+  <div id="pill">Offline</div>
+  <button class="btn" id="btnConn">Connect</button>
+  <button class="icon" id="btnSet" aria-label="Settings">&#9881;</button>
+</header>
+
+<div id="banner" class="off"><span class="grow" id="bannerTxt">Not connected</span><span id="bannerBtns"></span></div>
+
+<nav class="tabs">
+  <button data-t="dash" class="on">Dash</button>
+  <button data-t="level">Level</button>
+</nav>
+
+<main>
+<section id="dash" class="on">
+  <div class="grid">
+    <div class="tile span" id="tSoc">
+      <div class="hero">
+        <svg viewBox="0 0 130 130">
+          <circle class="ring-bg" cx="65" cy="65" r="54" fill="none" stroke-width="12"/>
+          <circle id="ring" cx="65" cy="65" r="54" fill="none" stroke-width="12" stroke-linecap="round"
+                  stroke-dasharray="339.3" stroke-dashoffset="339.3" transform="rotate(-90 65 65)" stroke="var(--stale)"/>
+        </svg>
+        <div>
+          <div class="lbl">Battery</div>
+          <div class="big" id="soc">--</div>
+          <div class="sub" id="battSub">--</div>
+        </div>
+      </div>
+    </div>
+    <div class="tile" id="tTtg"><div class="lbl">Time to empty</div><div class="val" id="ttg">--</div><div class="sub" id="ttgSub">&nbsp;</div></div>
+    <div class="tile" id="tNet"><div class="lbl">Net current</div><div class="val" id="net">--</div><div class="sub" id="pwr">&nbsp;</div></div>
+    <div class="tile" id="tSol"><div class="lbl">Solar</div><div class="val" id="solW">--</div><div class="sub" id="solSub">&nbsp;</div></div>
+    <div class="tile" id="tGrey"><div class="lbl">Grey water</div><div class="val" id="grey">--</div><div class="sub">float switch</div></div>
+    <div class="tile" id="tWae"><div class="lbl">Waeco</div><div class="val" id="wae">--</div><div class="sub" id="waeSub">&nbsp;</div></div>
+    <div class="tile" id="tDom"><div class="lbl">Dometic</div><div class="val" id="dom">--</div><div class="sub" id="domSub">&nbsp;</div></div>
+  </div>
+</section>
+
+<section id="level">
+  <div class="lvl-wrap">
+    <div id="needcal" hidden>
+      <b>Calibrate first</b>
+      <p class="note">Takes 30 seconds and works with the sensor mounted any way up.</p>
+      <button class="btn" id="btnCal1">Calibrate mounting</button>
+    </div>
+    <svg id="bubble" viewBox="0 0 300 300">
+      <circle cx="150" cy="150" r="140" fill="var(--tile)" stroke="var(--line)" stroke-width="2"/>
+      <circle cx="150" cy="150" r="84" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="4 5"/>
+      <circle id="ringOk" cx="150" cy="150" r="14" fill="none" stroke="var(--ok)" stroke-width="3"/>
+      <line x1="150" y1="14" x2="150" y2="286" stroke="var(--line)"/>
+      <line x1="14" y1="150" x2="286" y2="150" stroke="var(--line)"/>
+      <text x="150" y="34" text-anchor="middle" fill="var(--sec)" font-size="13" font-weight="700">FRONT</text>
+      <text x="150" y="282" text-anchor="middle" fill="var(--sec)" font-size="13" font-weight="700">REAR</text>
+      <text x="28" y="155" text-anchor="middle" fill="var(--sec)" font-size="13" font-weight="700">L</text>
+      <text x="272" y="155" text-anchor="middle" fill="var(--sec)" font-size="13" font-weight="700">R</text>
+      <circle id="bub" cx="150" cy="150" r="20" fill="var(--stale)" stroke="#0B0F14" stroke-width="3"/>
+    </svg>
+    <div id="hint">&nbsp;</div>
+    <div class="lv2">
+      <div class="tile" id="tRoll"><div class="lbl">Roll</div><div class="val" id="roll">--</div><div class="word" id="rollW">&nbsp;</div></div>
+      <div class="tile" id="tPitch"><div class="lbl">Pitch</div><div class="val" id="pitch">--</div><div class="word" id="pitchW">&nbsp;</div></div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="btnZero">Set level here</button>
+      <button class="btn ghost" id="btnCal2">Recalibrate</button>
+    </div>
+    <div class="note">Bubble moves to the high side, like a real level. Top of screen = front of van.</div>
+  </div>
+</section>
+</main>
+
+<dialog id="cal">
+  <h3 id="calT"></h3>
+  <p id="calP"></p>
+  <div class="err" id="calE"></div>
+  <div class="row">
+    <button class="btn ghost" id="calX">Cancel</button>
+    <button class="btn" id="calGo">Capture</button>
+  </div>
+</dialog>
+
+<dialog id="set">
+  <h3>Settings</h3>
+  <p>Used for the "raise this much" hints on the Level page. Approximate is fine.</p>
+  <div class="field"><label for="sTrack">Wheel track (mm)</label><input id="sTrack" type="number" min="500" max="4000" step="50"></div>
+  <div class="field"><label for="sHitch">Hitch to axle (mm)</label><input id="sHitch" type="number" min="1000" max="9000" step="100"></div>
+  <div class="field"><label for="sSound">Beep / vibrate</label><input id="sSound" type="checkbox"></div>
+  <div class="field"><label for="sDemo">Demo data (no controller)</label><input id="sDemo" type="checkbox"></div>
+  <div class="row"><button class="btn" id="setOk">Done</button></div>
+</dialog>
+
+<script>
+"use strict";
+/* ---------------- BLE protocol (matches caravan_ble.yaml) ---------------- */
+const U = {
+  svc:    "c0a7a5e0-0001-4c1b-9f6e-5a1d0c4a0001",
+  level:  "c0a7a5e0-0002-4c1b-9f6e-5a1d0c4a0001",
+  batt:   "c0a7a5e0-0003-4c1b-9f6e-5a1d0c4a0001",
+  solar:  "c0a7a5e0-0004-4c1b-9f6e-5a1d0c4a0001",
+  status: "c0a7a5e0-0005-4c1b-9f6e-5a1d0c4a0001",
+  cmd:    "c0a7a5e0-0006-4c1b-9f6e-5a1d0c4a0001",
+};
+const NA = 0x7FFF;
+const ALARMS = ["BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER"];
+const SHORT = ["Batt critical", "Fridge", "Batt low", "Grey water"];
+const BEEPS = [4, 6, 2, 1];
+const MPPT = {0:"Off",2:"Bulk",3:"Absorb",4:"Float",5:"Equalise",6:"Fault"};
+
+const $ = s => document.querySelector(s);
+const sc = (v, k) => v === NA ? NaN : v / k;
+const fmt = (v, d, u) => Number.isNaN(v) || v === undefined ? "--" : v.toFixed(d) + (u || "");
+
+/* ---------------- state ---------------- */
+const S = { on:false, lastRx:0, a:null, buf:[], b:{}, s:{}, t:{}, shown:-1 };
+const cfg = Object.assign({ track:2000, hitch:4000, sound:true, demo:false, cal:null },
+  JSON.parse(localStorage.getItem("cv") || "{}"));
+if (new URLSearchParams(location.search).has("demo")) cfg.demo = true;
+const save = () => localStorage.setItem("cv", JSON.stringify(cfg));
+
+/* ---------------- BLE ---------------- */
+let dev, cmdCh, wake;
+const dec = {
+  level(dv){
+    S.a = [dv.getInt16(0,true)/1000, dv.getInt16(2,true)/1000, dv.getInt16(4,true)/1000];
+    S.buf.push(S.a); if (S.buf.length > 10) S.buf.shift();
+  },
+  batt(dv){
+    const g = o => dv.getInt16(o, true);
+    S.b = { soc:sc(g(0),10), v:sc(g(2),100), i:sc(g(4),100), ah:sc(g(6),10), ttg:sc(g(8),1) };
+  },
+  solar(dv){
+    const g = o => dv.getInt16(o, true);
+    S.s = { w:sc(g(0),1), a:sc(g(2),100), y:dv.getFloat32(4,true), st:dv.getUint8(8) };
+  },
+  status(dv){
+    const g = o => dv.getInt16(o, true);
+    S.t = { wae:sc(g(0),10), dom:sc(g(2),10), flags:dv.getUint8(4), lat:dv.getUint8(5), sil:dv.getUint8(6), shown:dv.getInt8(7) };
+  },
+};
+
+async function connect(){
+  try {
+    initAudio();
+    dev = await navigator.bluetooth.requestDevice({
+      filters: [{ services:[U.svc] }, { namePrefix:"caravan" }],
+      optionalServices: [U.svc],
+    });
+    dev.addEventListener("gattserverdisconnected", onDisc);
+    await open();
+  } catch (e) { if (e.name !== "NotFoundError") setPill("Error: " + e.message); }
+}
+async function open(){
+  setPill("Connecting…");
+  const server = await dev.gatt.connect();
+  const svc = await server.getPrimaryService(U.svc);
+  for (const k of ["level","batt","solar","status"]) {
+    const ch = await svc.getCharacteristic(U[k]);
+    ch.addEventListener("characteristicvaluechanged", e => { dec[k](e.target.value); S.lastRx = Date.now(); });
+    await ch.startNotifications();
+    try { dec[k](await ch.readValue()); S.lastRx = Date.now(); } catch (_) {}
+  }
+  cmdCh = await svc.getCharacteristic(U.cmd);
+  S.on = true; setPill("Connected", true);
+  keepAwake();
+}
+function onDisc(){
+  S.on = false; cmdCh = null; setPill("Reconnecting…");
+  let tries = 0;
+  const retry = async () => {
+    if (S.on || cfg.demo) return;
+    try { await open(); } catch (_) { if (++tries < 40) setTimeout(retry, 3000); else setPill("Offline"); }
+  };
+  setTimeout(retry, 1500);
+}
+async function sendCmd(n){
+  if (cfg.demo) { demoSilence(n); return; }
+  if (!cmdCh) return;
+  try { await cmdCh.writeValueWithResponse(new Uint8Array([n])); } catch (e) { setPill("Write failed"); }
+}
+async function keepAwake(){
+  try { if ("wakeLock" in navigator) wake = await navigator.wakeLock.request("screen"); } catch (_) {}
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && (S.on || cfg.demo)) keepAwake(); });
+
+function setPill(t, on){ const p = $("#pill"); p.textContent = t; p.classList.toggle("on", !!on); }
+
+/* ---------------- sound ---------------- */
+let ac;
+function initAudio(){ try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); } catch (_) {} }
+function tone(freq, start, dur){
+  if (!ac) return;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.frequency.value = freq; o.type = "sine";
+  g.gain.setValueAtTime(0.0001, ac.currentTime + start);
+  g.gain.exponentialRampToValueAtTime(0.4, ac.currentTime + start + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + start + dur);
+  o.connect(g).connect(ac.destination); o.start(ac.currentTime + start); o.stop(ac.currentTime + start + dur + 0.05);
+}
+function beeps(n){ if (!cfg.sound) return; for (let i = 0; i < n; i++) tone(880, i * 0.3, 0.15); if (navigator.vibrate) navigator.vibrate(Array(n).fill([150,150]).flat()); }
+function chime(){ if (!cfg.sound) return; tone(660, 0, 0.9); if (navigator.vibrate) navigator.vibrate([400,100,400]); }
+
+/* ---------------- level maths ---------------- */
+const dot = (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const norm = a => { const m = Math.hypot(a[0],a[1],a[2]) || 1; return [a[0]/m,a[1]/m,a[2]/m]; };
+const sub = (a,b) => [a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const cross = (a,b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const avg = buf => { const n = buf.length || 1; return buf.reduce((s,v)=>[s[0]+v[0]/n,s[1]+v[1]/n,s[2]+v[2]/n],[0,0,0]); };
+const deg = r => r * 180 / Math.PI;
+
+/* cfg.cal = { up:[x,y,z], front:[x,y,z] } unit vectors in sensor axes.
+   pitch > 0 = nose high.  roll > 0 = right side low.  */
+function attitude(){
+  const c = cfg.cal; if (!c || !S.a) return null;
+  const U_ = c.up, F = c.front, R = cross(F, U_);
+  const u = dot(S.a, U_), f = dot(S.a, F), r = dot(S.a, R);
+  if (u < 0.3) return null;                         // sensor nowhere near its calibrated up
+  return { pitch: deg(Math.atan2(-f, u)), roll: deg(Math.atan2(-r, u)) };
+}
+
+/* ---------------- calibration wizard ---------------- */
+let calStep = 0, calUp = null;
+function openCal(){
+  calStep = 1; calUp = null; $("#calE").textContent = "";
+  $("#calT").textContent = "Step 1 of 2: level";
+  $("#calP").textContent = "Park the van level (check with a spirit level) and keep it still. Tap Capture.";
+  $("#calGo").textContent = "Capture";
+  $("#cal").showModal();
+}
+function calCapture(){
+  if (S.buf.length < 5) { $("#calE").textContent = "Not enough data yet. Check the connection and try again."; return; }
+  const a = avg(S.buf), jitter = Math.max(...S.buf.map(v => Math.hypot(v[0]-a[0],v[1]-a[1],v[2]-a[2])));
+  if (jitter > 0.02) { $("#calE").textContent = "Van is moving. Wait a moment and try again."; return; }
+  $("#calE").textContent = "";
+  if (calStep === 1) {
+    calUp = norm(a); calStep = 2;
+    $("#calT").textContent = "Step 2 of 2: nose up";
+    $("#calP").textContent = "Raise the nose a few degrees (wind the jockey wheel up several turns). Keep it still, tap Capture.";
+    $("#calGo").textContent = "Capture";
+    return;
+  }
+  const d = sub(a, calUp);                          // change in the up vector
+  const dp = sub(d, calUp.map(x => x * dot(d, calUp)));   // remove the part along up
+  if (Math.hypot(dp[0],dp[1],dp[2]) < 0.04) { $("#calE").textContent = "Not enough tilt. Raise the nose a bit more."; return; }
+  const front = norm(dp.map(x => -x));              // nose up makes the reading along "front" go negative
+  cfg.cal = { up: calUp, front }; save();
+  $("#cal").close();
+}
+$("#calGo").onclick = calCapture;
+$("#calX").onclick = () => $("#cal").close();
+$("#btnCal1").onclick = $("#btnCal2").onclick = openCal;
+
+/* Set level here: re-capture "up" and keep the front direction */
+let zeroArm = 0;
+$("#btnZero").onclick = () => {
+  const b = $("#btnZero");
+  if (!cfg.cal || S.buf.length < 5) return;
+  if (Date.now() - zeroArm > 4000) { zeroArm = Date.now(); b.textContent = "Tap again to confirm"; setTimeout(()=>{ if (Date.now()-zeroArm>=3900) b.textContent = "Set level here"; }, 4100); return; }
+  zeroArm = 0; b.textContent = "Set level here";
+  const up = norm(avg(S.buf));
+  const f = sub(cfg.cal.front, up.map(x => x * dot(cfg.cal.front, up)));
+  cfg.cal = { up, front: norm(f) }; save();
+};
+
+/* ---------------- render ---------------- */
+const COL = { ok:"var(--ok)", warn:"var(--warn)", bad:"var(--bad)", off:"var(--stale)" };
+function tint(id, c){ $(id).style.setProperty("--c", c); }
+function setNum(id, text, c){ const e = $(id); e.textContent = text; e.classList.toggle("stale", c === COL.off); }
+
+let lastShown = -2, levelSince = 0, chimed = false;
+
+function render(){
+  const live = cfg.demo || (S.on && Date.now() - S.lastRx < 6000);
+  const b = S.b, s = S.s, t = S.t;
+
+  /* --- battery --- */
+  const soc = live ? b.soc : NaN;
+  const sc_ = Number.isNaN(soc) ? COL.off : soc < 50 ? COL.bad : soc < 55 ? COL.warn : COL.ok;
+  setNum("#soc", Number.isNaN(soc) ? "--" : Math.round(soc) + "%", sc_);
+  $("#ring").style.stroke = sc_;
+  $("#ring").style.strokeDashoffset = 339.3 * (1 - (Number.isNaN(soc) ? 0 : Math.max(0, Math.min(100, soc)) / 100));
+  $("#battSub").textContent = live ? `${fmt(b.v,2," V")}  ·  ${fmt(b.ah,1," Ah used")}` : "--";
+  tint("#tSoc", sc_);
+
+  const i = live ? b.i : NaN;
+  const dis = !Number.isNaN(i) && i < -0.05;
+  let ttgTxt = "--";
+  if (dis && b.ttg > 0) ttgTxt = b.ttg >= 1440 ? `${Math.floor(b.ttg/1440)}d ${Math.floor(b.ttg%1440/60)}h` : `${Math.floor(b.ttg/60)}h ${String(Math.round(b.ttg%60)).padStart(2,"0")}m`;
+  setNum("#ttg", ttgTxt, Number.isNaN(i) ? COL.off : COL.ok);
+  $("#ttgSub").textContent = Number.isNaN(i) ? "" : dis ? "at current draw" : "charging / idle";
+  tint("#tTtg", Number.isNaN(i) ? COL.off : COL.ok);
+  setNum("#net", Number.isNaN(i) ? "--" : (i >= 0 ? "+" : "") + i.toFixed(1) + " A", Number.isNaN(i) ? COL.off : COL.ok);
+  $("#pwr").textContent = live && !Number.isNaN(i) && !Number.isNaN(b.v) ? Math.round(i * b.v) + " W" : "";
+  tint("#tNet", Number.isNaN(i) ? COL.off : COL.ok);
+
+  /* --- solar --- */
+  const w = live ? s.w : NaN;
+  setNum("#solW", Number.isNaN(w) ? "--" : Math.round(w) + " W", Number.isNaN(w) ? COL.off : COL.ok);
+  $("#solSub").textContent = live && !Number.isNaN(w) ? `${fmt(s.a,1," A")} · ${MPPT[s.st] || "--"} · ${fmt(s.y,2," kWh")}` : "";
+  tint("#tSol", Number.isNaN(w) ? COL.off : COL.ok);
+
+  /* --- grey / fridges --- */
+  const grey = live && (t.flags & 1);
+  setNum("#grey", live ? (grey ? "FULL" : "OK") : "--", live ? (grey ? COL.warn : COL.ok) : COL.off);
+  tint("#tGrey", live ? (grey ? COL.warn : COL.ok) : COL.off);
+  const fa = live && (t.lat & 2);
+  for (const [k, id, tid] of [["wae","#wae","#tWae"],["dom","#dom","#tDom"]]) {
+    const v = live ? t[k] : NaN;
+    const c = Number.isNaN(v) ? COL.off : v > 8 ? (fa ? COL.bad : COL.warn) : COL.ok;
+    setNum(id, Number.isNaN(v) ? "--" : v.toFixed(1) + "°C", c);
+    $(id + "Sub").textContent = Number.isNaN(v) ? (k === "wae" ? "not in range / no sensor" : "no data") : v > 8 ? "warm" : "OK";
+    tint(tid, c);
+  }
+
+  renderBanner(live);
+  renderLevel(live);
+}
+
+function renderBanner(live){
+  const el = $("#banner"), txt = $("#bannerTxt"), btns = $("#bannerBtns"), t = S.t;
+  btns.innerHTML = "";
+  if (!live) { el.className = "off"; txt.textContent = S.on ? "No data" : "Not connected"; return; }
+  const sounding = t.lat & ~t.sil;
+  let top = -1; for (let k = 0; k < 4; k++) if (sounding & (1 << k)) { top = k; break; }
+  if (top >= 0) {
+    el.className = "alarm"; txt.textContent = ALARMS[top];
+    for (const [lbl, n] of [["30 min", 1], ["Until cleared", 2]]) {
+      const bt = document.createElement("button"); bt.textContent = lbl; bt.onclick = () => sendCmd(n); btns.appendChild(bt);
+    }
+  } else if (t.lat) {
+    const names = []; for (let k = 0; k < 4; k++) if (t.lat & (1 << k)) names.push(SHORT[k]);
+    el.className = "mute"; txt.textContent = "SILENCED: " + names.join(", ");
+  } else if (Number.isNaN(S.b.soc)) {
+    el.className = "warn"; txt.textContent = "SENSOR LOST: SHUNT";
+  } else { el.className = ""; txt.textContent = "ALL OK"; }
+  if (top !== lastShown) { if (top >= 0) beeps(BEEPS[top]); lastShown = top; }
+}
+
+function renderLevel(live){
+  const need = !cfg.cal;
+  $("#needcal").hidden = !need;
+  $("#bubble").style.display = need ? "none" : "";
+  const att = need || !live ? null : attitude();
+  const col = v => Math.abs(v) <= 0.5 ? COL.ok : Math.abs(v) <= 3 ? COL.warn : COL.bad;
+  if (!att) {
+    setNum("#roll", "--", COL.off); setNum("#pitch", "--", COL.off);
+    $("#rollW").textContent = $("#pitchW").textContent = ""; $("#hint").textContent = need ? "" : "Waiting for sensor…";
+    tint("#tRoll", COL.off); tint("#tPitch", COL.off); $("#bub").setAttribute("fill", "var(--stale)");
+    levelSince = 0; return;
+  }
+  const { roll, pitch } = att;
+  setNum("#roll", Math.abs(roll).toFixed(1) + "°", col(roll));
+  setNum("#pitch", Math.abs(pitch).toFixed(1) + "°", col(pitch));
+  $("#rollW").textContent = Math.abs(roll) <= 0.5 ? "LEVEL" : roll > 0 ? "RIGHT LOW" : "LEFT LOW";
+  $("#pitchW").textContent = Math.abs(pitch) <= 0.5 ? "LEVEL" : pitch > 0 ? "NOSE HIGH" : "NOSE LOW";
+  $("#rollW").style.color = col(roll); $("#pitchW").style.color = col(pitch);
+  tint("#tRoll", col(roll)); tint("#tPitch", col(pitch));
+
+  /* bubble goes to the high side. Full scale = 5 degrees. */
+  const K = 126 / 5, cl = v => Math.max(-5, Math.min(5, v));
+  const bx = 150 - cl(roll) * K, by = 150 - cl(pitch) * K;
+  const bubble = $("#bub");
+  bubble.setAttribute("cx", bx.toFixed(1)); bubble.setAttribute("cy", by.toFixed(1));
+  const worst = Math.max(Math.abs(roll), Math.abs(pitch));
+  bubble.setAttribute("fill", worst <= 0.5 ? COL.ok : worst <= 3 ? COL.warn : COL.bad);
+
+  /* how much to lift: wheel track for roll, hitch-to-axle for pitch */
+  const rollMm = Math.round(Math.tan(Math.abs(roll) * Math.PI / 180) * cfg.track / 5) * 5;
+  const pitchMm = Math.round(Math.tan(Math.abs(pitch) * Math.PI / 180) * cfg.hitch / 5) * 5;
+  const parts = [];
+  if (Math.abs(roll) > 0.5) parts.push(`Raise ${roll > 0 ? "RIGHT" : "LEFT"} ≈ ${rollMm} mm`);
+  if (Math.abs(pitch) > 0.5) parts.push(`${pitch > 0 ? "Lower" : "Raise"} nose ≈ ${pitchMm} mm`);
+  $("#hint").textContent = parts.length ? parts.join("  ·  ") : "LEVEL ✓";
+  $("#hint").style.color = parts.length ? "var(--txt)" : "var(--ok)";
+
+  /* level chime: both axes within 0.5° for 3 s */
+  if (worst <= 0.5) {
+    if (!levelSince) levelSince = Date.now();
+    if (!chimed && Date.now() - levelSince > 3000) { chime(); chimed = true; }
+  } else { levelSince = 0; if (worst > 1.0) chimed = false; }
+}
+
+/* ---------------- tabs / settings ---------------- */
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("main section").forEach(sx => sx.classList.toggle("on", sx.id === b.dataset.t));
+});
+$("#btnConn").onclick = connect;
+$("#btnSet").onclick = () => {
+  $("#sTrack").value = cfg.track; $("#sHitch").value = cfg.hitch;
+  $("#sSound").checked = cfg.sound; $("#sDemo").checked = cfg.demo;
+  $("#set").showModal();
+};
+$("#setOk").onclick = () => {
+  cfg.track = +$("#sTrack").value || 2000; cfg.hitch = +$("#sHitch").value || 4000;
+  cfg.sound = $("#sSound").checked;
+  const wasDemo = cfg.demo; cfg.demo = $("#sDemo").checked;
+  save(); $("#set").close();
+  if (cfg.demo && !wasDemo) startDemo();
+  if (!cfg.demo && wasDemo) { stopDemo(); setPill("Offline"); }
+};
+if (!("bluetooth" in navigator)) { $("#btnConn").textContent = "No Bluetooth"; $("#btnConn").disabled = true; $("#bannerTxt").textContent = "Open in Chrome on Android"; }
+
+/* ---------------- demo data (preview with no controller) ---------------- */
+let demoTimer, demoT0, demoLat = 0, demoSil = 0;
+function startDemo(){
+  initAudio(); demoT0 = Date.now(); setPill("Demo", true); keepAwake();
+  if (!cfg.cal) {                                   // sensor "mounted on its edge, front toward -X"
+    cfg.cal = { up:[0,1,0], front:[-1,0,0] };
+  }
+  demoTimer = setInterval(() => {
+    const t = (Date.now() - demoT0) / 1000;
+    const roll = 4 * Math.sin(t / 7) * Math.exp(-t / 90), pitch = 2.5 * Math.cos(t / 9) * Math.exp(-t / 90);
+    const up = cfg.cal.up, F = cfg.cal.front, R = cross(F, up);
+    const rr = -roll * Math.PI / 180, pp = -pitch * Math.PI / 180;     // invert attitude() maths
+    S.a = [0,1,2].map(k => up[k] * Math.cos(rr) * Math.cos(pp) + F[k] * Math.sin(pp) + R[k] * Math.sin(rr));
+    S.buf.push(S.a); if (S.buf.length > 10) S.buf.shift();
+    S.b = { soc: 62 - (t / 600), v: 12.8, i: -8.4, ah: 71.2, ttg: 560 };
+    S.s = { w: 140 + 20 * Math.sin(t / 5), a: 11.2, y: 0.84, st: 3 };
+    if (t > 20 && !demoLat) demoLat = 8;            // grey water alarm after 20 s
+    S.t = { wae: 5.2, dom: 4.1, flags: demoLat ? 1 : 0, lat: demoLat, sil: demoSil, shown: -1 };
+    S.lastRx = Date.now();
+  }, 200);
+}
+function stopDemo(){ clearInterval(demoTimer); demoLat = demoSil = 0; S.t = {}; S.buf = []; S.a = null; }
+function demoSilence(n){ if (!demoLat) return; demoSil = demoLat; }
+
+if (cfg.demo) startDemo();
+setInterval(render, 200);
+render();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
