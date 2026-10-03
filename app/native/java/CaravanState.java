@@ -112,17 +112,47 @@ final class CaravanState {
         return amps > 0.05f ? "Charging" : "Idle";
     }
 
+    private static int cfgOr(int i, int def) {
+        return cfg[i] == Integer.MIN_VALUE ? def : cfg[i];
+    }
+
+    private static String t1(float v) {
+        return String.format(Locale.US, "%.1f\u00B0", v);
+    }
+
+    /** Sensors the controller is watching that are currently silent, e.g. "battery shunt, solar controller". */
+    static String lostList() {
+        int m = cfgOr(18, 11);
+        StringBuilder sb = new StringBuilder();
+        if ((m & 1) != 0 && Float.isNaN(soc)) sb.append("battery shunt, ");
+        if ((m & 2) != 0 && Float.isNaN(solarW)) sb.append("solar controller, ");
+        if ((m & 4) != 0 && Float.isNaN(wae)) sb.append("Waeco probe, ");
+        if ((m & 8) != 0 && Float.isNaN(dom)) sb.append("Dometic probe, ");
+        if (sb.length() == 0) return "";
+        return sb.substring(0, sb.length() - 2);
+    }
+
+    /** One line saying what is wrong, for the notification. */
     static String alarmDetail(int a) {
         switch (a) {
             case 0:
+                return "Battery " + pct(soc) + ", critical below " + cfgOr(0, 50) + "%";
             case 2:
-                return "State of charge " + pct(soc);
-            case 1:
-                return "Dometic " + temp(dom) + "   Waeco " + temp(wae);
-            case 4:
-                return "A sensor has stopped reporting";
+                return "Battery " + pct(soc) + ", low below " + cfgOr(1, 55) + "%";
+            case 1: {
+                float tw = cfgOr(2, 80) / 10f, td = cfgOr(3, 80) / 10f;
+                StringBuilder sb = new StringBuilder();
+                if (!Float.isNaN(dom) && dom > td) sb.append("Dometic ").append(t1(dom)).append(" (limit ").append(t1(td)).append("), ");
+                if (!Float.isNaN(wae) && wae > tw) sb.append("Waeco ").append(t1(wae)).append(" (limit ").append(t1(tw)).append("), ");
+                if (sb.length() == 0) return "Fridge too warm. Dometic " + temp(dom) + "  Waeco " + temp(wae);
+                return "Too warm: " + sb.substring(0, sb.length() - 2);
+            }
+            case 4: {
+                String l = lostList();
+                return l.isEmpty() ? "A sensor has stopped reporting" : "No data from: " + l;
+            }
             default:
-                return "Float switch closed";
+                return "Grey water tank is full, time to empty it";
         }
     }
 }

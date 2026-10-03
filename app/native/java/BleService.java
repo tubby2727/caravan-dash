@@ -546,6 +546,7 @@ public class BleService extends Service {
                 .setSmallIcon(R.drawable.ic_stat)
                 .setContentTitle(CaravanState.ALARMS[top])
                 .setContentText(CaravanState.alarmDetail(top))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(CaravanState.alarmDetail(top)))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

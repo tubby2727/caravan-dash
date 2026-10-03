@@ -524,6 +524,27 @@ function render(){
   renderLevel(live);
 }
 
+function alarmWhy(k){
+  const c = (i) => CFGV[i] === undefined ? CD.def[i] : CFGV[i], b = S.b || {}, t = S.t || {}, p = v => Number.isNaN(v) || v === undefined ? "--" : v.toFixed(1) + "\u00B0";
+  if (k === 0) return "battery " + (Number.isNaN(b.soc) ? "--" : Math.round(b.soc) + "%") + " (limit " + c(0) + "%)";
+  if (k === 2) return "battery " + (Number.isNaN(b.soc) ? "--" : Math.round(b.soc) + "%") + " (limit " + c(1) + "%)";
+  if (k === 1) {
+    const tw = c(2) / 10, td = c(3) / 10, o = [];
+    if (t.dom > td) o.push("Dometic " + p(t.dom) + " (limit " + td.toFixed(1) + "\u00B0)");
+    if (t.wae > tw) o.push("Waeco " + p(t.wae) + " (limit " + tw.toFixed(1) + "\u00B0)");
+    return o.length ? o.join(", ") : "too warm";
+  }
+  if (k === 4) {
+    const m = c(18), o = [];
+    if ((m & 1) && Number.isNaN(b.soc)) o.push("battery shunt");
+    if ((m & 2) && Number.isNaN((S.s || {}).w)) o.push("solar controller");
+    if ((m & 4) && Number.isNaN(t.wae)) o.push("Waeco probe");
+    if ((m & 8) && Number.isNaN(t.dom)) o.push("Dometic probe");
+    return o.length ? "no data from " + o.join(", ") : "a sensor stopped reporting";
+  }
+  return "tank full, time to empty it";
+}
+
 function renderBanner(live){
   const el = $("#banner"), txt = $("#bannerTxt"), btns = $("#bannerBtns"), t = S.t;
   btns.innerHTML = "";
@@ -531,7 +552,7 @@ function renderBanner(live){
   const sounding = t.lat & ~t.sil;
   let top = -1; for (let k = 0; k < 5; k++) if (sounding & (1 << k)) { top = k; break; }
   if (top >= 0) {
-    el.className = "alarm"; txt.textContent = ALARMS[top];
+    el.className = "alarm"; txt.textContent = ALARMS[top] + ": " + alarmWhy(top);
     for (const [lbl, n] of [["30 min", 1], ["Until cleared", 2]]) {
       const bt = document.createElement("button"); bt.textContent = lbl; bt.onclick = () => sendCmd(n); btns.appendChild(bt);
     }
@@ -893,7 +914,7 @@ if (cfg.demo) startDemo();
 setInterval(() => { try { render(); } catch (e) { dbgErr("render: " + e.message); } }, 200);
 try { render(); } catch (e) { dbgErr("render: " + e.message); }
 setInterval(() => {
-  $("#diag").textContent = "build 5 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
+  $("#diag").textContent = "build 6 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
     + " \u00B7 " + (S.on ? "connected" : "not connected") + " \u00B7 packets " + DBG.n
     + (DBG.n ? " (" + Math.round((Date.now() - DBG.ev) / 1000) + "s ago)" : "");
 }, 500);
