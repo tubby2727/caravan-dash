@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_desc">Caravan battery, solar, fridge temperatures and alarms</string>
+    <string name="widget_desc">Caravan power flow, fridges and alarms</string>
+    <string name="widget_small_desc">Caravan battery, fridges and alarms (small)</string>
 </resources>

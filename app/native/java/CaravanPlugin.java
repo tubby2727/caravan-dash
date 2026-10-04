@@ -47,7 +47,7 @@ public class CaravanPlugin extends Plugin {
     @PluginMethod
     public void snapshot(PluginCall call) {
         JSObject r = new JSObject();
-        for (int i = 0; i < 7; i++) {
+        for (int i = 0; i < 9; i++) {
             byte[] b = CaravanState.get(i);
             if (b != null) r.put("p" + i, Base64.encodeToString(b, Base64.NO_WRAP));
         }

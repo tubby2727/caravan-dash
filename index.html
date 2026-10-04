@@ -293,6 +293,12 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
     <div class="gn">Needed to change settings, silence alarms or reset. Enter it once; this phone remembers it and sends it every time it connects.</div>
     <div class="srow"><div class="sl">PIN<span class="gn" id="pinState"></span></div><input id="sPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" placeholder="••••"><button class="btn" id="btnPin">Save</button></div>
   </div>
+  <div class="card" id="alCard">
+    <h4>Alarms on / off</h4>
+    <div class="gn">Switch one off only if it keeps waking you. It stays off for the time you choose, the banner says so, and a warning still shows on the screen and in the log. A restart of the controller turns everything back on.</div>
+    <div id="alRows"></div>
+    <div class="srow"><div class="sl">Silence all<br><span class="gn" id="saTxt">Critical battery still sounds</span></div><div class="stp" id="saBtns"></div></div>
+  </div>
   <div id="cfgBody"></div>
   <div class="card">
     <h4>This phone</h4>
@@ -314,6 +320,14 @@ dialog p{color:var(--sec);font-size:14px;line-height:1.45}
   </div>
 </section>
 </main>
+
+<dialog id="offDlg">
+  <h3 id="offT">Turn off?</h3>
+  <p>Warnings still show on the screen and in the log. It will not beep or wake the screen.</p>
+  <div class="row"><button class="btn" data-how="1">12 hours</button><button class="btn" data-how="2">3 days</button></div>
+  <div class="row" style="margin-top:8px"><button class="btn" data-how="3">Until I turn it on</button></div>
+  <div class="row" style="margin-top:12px"><button class="btn ghost" id="offX">Cancel, keep it on</button></div>
+</dialog>
 
 <dialog id="logDlg">
   <h3>Alarm log</h3>
@@ -354,11 +368,13 @@ const U = {
   cmd:    "c0a7a5e0-0006-4c1b-9f6e-5a1d0c4a0001",
   power:  "c0a7a5e0-0009-4c1b-9f6e-5a1d0c4a0001",   // v1.4
   log:    "c0a7a5e0-000a-4c1b-9f6e-5a1d0c4a0001",   // v1.4
+  alarms: "c0a7a5e0-000b-4c1b-9f6e-5a1d0c4a0001",   // v1.5
 };
 const NA = 0x7FFF;
 const ALARMS = ["BATTERY CRITICAL", "FRIDGE WARM", "BATTERY LOW", "GREY WATER", "SENSOR LOST", "VICTRON FAULT"];
 const SHORT = ["Batt critical", "Fridge", "Batt low", "Grey water", "Sensor", "Victron"];
-const NICE = ["Battery critical", "Fridge warm", "Battery low", "Grey water", "Sensor lost", "Victron fault"];
+const NICE = ["Battery critical", "Fridge warm", "Battery low", "Grey water", "Sensor lost", "Victron fault", "Buzzer", "All alarms"];
+const OFFN = ["CRITICAL BATTERY ALARM", "FRIDGE ALARM", "LOW BATTERY ALARM", "GREY WATER ALARM", "SENSOR ALARM", "VICTRON ALARM", "BUZZER"];
 const BEEPS = [4, 6, 2, 1, 3, 5];
 const NAL = 6;
 const MPPT = {0:"Off",2:"Bulk",3:"Absorb",4:"Float",5:"Equalise",6:"Fault"};
@@ -423,9 +439,14 @@ const dec = {
     const lt = dv.getUint16(14, true), first = !S.p;
     S.p = { sol: sc(g(0), 1), van: van === 0x7FFE ? NaN : sc(van, 1), mains: van === 0x7FFE, bat: sc(g(4), 1),
             full: sc(g(6), 1), vanWh: sc(g(8), 1), low: sc(g(10), 10), pf: dv.getUint8(12), resets: dv.getUint8(13),
-            logTotal: lt, err: dv.getUint8(16), t: Date.now() };
+            logTotal: lt, err: dv.getUint8(16), fc: dv.byteLength >= 18 ? dv.getUint8(17) : 0, t: Date.now() };
     if (first) histNser = 4;
     if (S.on && !LB && lt !== logSeen && Date.now() - logAsked > 4000) logRequest();
+  },
+  alarms(dv){                                      // v1.5: alarms switched off, Silence all
+    if (dv.byteLength < 17) return;
+    const mins = []; for (let i = 0; i < 7; i++) mins.push(dv.getUint16(3 + 2 * i, true));
+    S.al = { mask: dv.getUint8(0), sall: dv.getUint16(1, true), mins, t: Date.now() };
   },
   log(dv){                                         // v1.4: alarm log, after command 0x17
     const k = dv.getUint8(0);
@@ -435,7 +456,7 @@ const dec = {
       return;
     }
     if (k === 0xFC && LB && dv.byteLength >= 9) {
-      LB.ev.push({ seq: dv.getUint16(1, true), a: dv.getUint8(3), e: dv.getUint8(4), at: dv.getUint32(5, true) });
+      LB.ev.push({ seq: dv.getUint16(1, true), a: dv.getUint8(3), e: dv.getUint8(4), at: dv.getUint32(5, true), i: dv.byteLength >= 10 ? dv.getUint8(9) : 0 });
       if (LB.ev.length >= LB.count) logDone();
     }
   },
@@ -448,14 +469,14 @@ const CB = !NATIVE ? null
   : (typeof Capacitor.registerPlugin === "function" ? Capacitor.registerPlugin("CaravanBle")
   : (Capacitor.Plugins && Capacitor.Plugins.CaravanBle) || null);
 if (NATIVE && !CB) dbgErr("CaravanBle plugin not found in Capacitor.Plugins");
-const KEYS = ["level", "batt", "solar", "status", "cfg", "hist", "power", "log"];
+const KEYS = ["level", "batt", "solar", "status", "cfg", "hist", "power", "log", "alarms"];
 const CONNTXT = { connected:"Connected", searching:"Searching…", connecting:"Connecting…", noperm:"Allow Bluetooth", "bt off":"Bluetooth off" };
 function b64dv(b){ const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new DataView(u.buffer); }
 function nativePacket(i, b){ if (!b || !KEYS[i]) return; dec[KEYS[i]](b64dv(b)); if (i < 4) S.lastRx = Date.now(); DBG.n++; DBG.ev = Date.now(); }
 function nativeConn(st){ const was = S.on; S.on = st === "connected"; setPill(CONNTXT[st] || st, S.on); if (S.on && !was) { setTimeout(reqCfg, 900); setTimeout(dashFetch, 3000); } }
 async function nativeSnapshot(){
   if (!CB) return;
-  try { const r = await CB.snapshot(); for (let i = 0; i < 4; i++) nativePacket(i, r["p" + i]); if (r.p6) nativePacket(6, r.p6); if (r.cfg) r.cfg.forEach((v, i) => { if (v !== null && v !== undefined && CFGV[i] === undefined) CFGV[i] = v; }); nativeConn(r.state); } catch (_) {}
+  try { const r = await CB.snapshot(); for (let i = 0; i < 4; i++) nativePacket(i, r["p" + i]); if (r.p6) nativePacket(6, r.p6); if (r.p8) nativePacket(8, r.p8); if (r.cfg) r.cfg.forEach((v, i) => { if (v !== null && v !== undefined && CFGV[i] === undefined) CFGV[i] = v; }); nativeConn(r.state); } catch (_) {}
 }
 async function nativeInit(){
   if (!CB) return;
@@ -485,7 +506,7 @@ async function open(){
     await ch.startNotifications();
     try { dec[k](await ch.readValue()); S.lastRx = Date.now(); } catch (_) {}
   }
-  for (const k of ["cfg", "hist", "power", "log"]) {   // newer firmware only
+  for (const k of ["cfg", "hist", "power", "log", "alarms"]) {   // newer firmware only
     try {
       const ch = await svc.getCharacteristic(U[k]);
       ch.addEventListener("characteristicvaluechanged", e => dec[k](e.target.value));
@@ -707,7 +728,8 @@ function logDone(){
   if (!LB) return;
   for (const e of LB.ev) {
     const t = LB.rx - (LB.now - e.at) * 1000;
-    if (!LOG.some(x => x.a === e.a && x.e === e.e && Math.abs(x.t - t) < 90000)) LOG.push({ a: e.a, e: e.e, t });
+    const old = LOG.find(x => x.a === e.a && x.e === e.e && Math.abs(x.t - t) < 90000);
+    if (!old) LOG.push({ a: e.a, e: e.e, t, i: e.i || 0 }); else if (e.i && !old.i) old.i = e.i;
   }
   LOG.sort((x, y) => x.t - y.t);
   if (LOG.length > 150) LOG = LOG.slice(-150);
@@ -715,10 +737,31 @@ function logDone(){
   try { localStorage.setItem("alog", JSON.stringify(LOG)); } catch (_) {}
   logRender();
 }
-const EVTXT = ["", "Fired", "Muted", "Silenced until cleared", "Sounding again", "Cleared"];
+const EVTXT = ["", "Fired", "Muted", "Silenced until cleared", "Sounding again", "Cleared", "Warning while its alarm was off", "Switched off", "Switched back on"];
+const OFFHOW = ["", "for 12 hours", "for 3 days", "until turned on"];
+const MPPT_ERR = { 1: "battery too hot", 2: "battery voltage too high", 17: "charger too hot", 18: "charger over current",
+  20: "bulk time limit", 33: "panel voltage too high", 34: "panel current too high", 38: "input shut down", 39: "input shut down",
+  65: "communication lost", 66: "communication lost", 67: "BMS connection lost", 116: "settings lost", 117: "firmware error", 119: "settings lost" };
+const SHUNT_AL = ["low voltage", "high voltage", "low SOC", "low starter voltage", "high starter voltage", "low temperature",
+  "high temperature", "mid-point voltage", "overload", "DC ripple", "low AC out", "high AC out", "short circuit", "BMS lockout"];
+function faultTxt(c){                                // Victron fault reason code from the controller (v1.4.1)
+  if (!c) return "";
+  if (c >= 128) return "Battery shunt: " + (SHUNT_AL[c - 128] || "alarm " + (c - 128));
+  if (c === 127) return "Solar charger in fault state";
+  if (c === 126) return "Test switch on the web page";
+  return "Solar charger Err " + c + (MPPT_ERR[c] ? ", " + MPPT_ERR[c] : "");
+}
+function whyTxt(a, i){                               // what the log says about why an alarm fired
+  if (!i) return "";
+  if (a === 1) return i === 3 ? "Waeco and Dometic" : i === 1 ? "Waeco" : i === 2 ? "Dometic" : "";
+  if (a === 4) return ["battery shunt", "solar controller", "Waeco probe", "Dometic probe"].filter((_, b) => i & (1 << b)).join(", ");
+  if (a === 5) return faultTxt(i);
+  return "";
+}
 function episodes(){                                 // one row per time an alarm fired, newest first
   const out = [];
   LOG.forEach((x, i) => {
+    if (x.e === 6) { out.push({ a: x.a, t: x.t, how: "Alarm was off, no beeps", open: false, i: x.i || 0 }); return; }
     if (x.e !== 1) return;
     let how = "Sounding", end = null;
     for (let j = i + 1; j < LOG.length; j++) {
@@ -730,11 +773,11 @@ function episodes(){                                 // one row per time an alar
       if (y.e === 4) how = "Sounding again";
     }
     if (end) how = "Cleared after " + dur((end - x.t) / 60000);
-    out.push({ a: x.a, t: x.t, how, open: !end });
+    out.push({ a: x.a, t: x.t, how, open: !end, i: x.i || 0 });
   });
   return out.reverse();
 }
-const EVCOL = ["#F87171", "#FBBF24", "#FBBF24", "#7CC4FF", "#8A96A3", "#F87171"];
+const EVCOL = ["#F87171", "#FBBF24", "#FBBF24", "#7CC4FF", "#8A96A3", "#F87171", "#8A96A3", "#8A96A3"];
 function whenTxt(t){
   const d = new Date(t), today = new Date().setHours(0,0,0,0);
   const day = new Date(t).setHours(0,0,0,0) === today ? "Today" : d.toLocaleDateString(undefined, { weekday: "short" });
@@ -749,10 +792,16 @@ function logRender(){
   const box = $("#evList"); box.innerHTML = "";
   const ep = episodes().slice(0, 3);
   if (!ep.length) box.appendChild(evRow("#4ADE80", "No alarms", S.p || LOG.length ? "Nothing in the log" : "Needs controller firmware v1.4", ""));
-  for (const e of ep) box.appendChild(evRow(EVCOL[e.a] || "#8A96A3", NICE[e.a] || "Alarm " + e.a, e.how, whenTxt(e.t)));
+  for (const e of ep) {
+    const why = whyTxt(e.a, e.i);
+    box.appendChild(evRow(EVCOL[e.a] || "#8A96A3", (NICE[e.a] || "Alarm " + e.a) + (why && e.a !== 5 ? " (" + why + ")" : ""), (e.a === 5 && why ? why + " \u00B7 " : "") + e.how, whenTxt(e.t)));
+  }
   const all = $("#logList"); all.innerHTML = "";
   if (!LOG.length) all.appendChild(el("p", "", "Nothing logged yet."));
-  for (const x of LOG.slice().reverse()) all.appendChild(evRow(EVCOL[x.a] || "#8A96A3", NICE[x.a] || "Alarm " + x.a, EVTXT[x.e] || "", whenTxt(x.t)));
+  for (const x of LOG.slice().reverse()) {
+    const why = x.e === 1 || x.e === 6 ? whyTxt(x.a, x.i) : x.e === 7 ? (OFFHOW[x.i] || "") : x.a === 7 && x.e === 2 ? "for " + x.i + " h" : "";
+    all.appendChild(evRow(EVCOL[x.a] || "#8A96A3", NICE[x.a] || "Alarm " + x.a, (EVTXT[x.e] || "") + (why ? ": " + why : ""), whenTxt(x.t)));
+  }
 }
 $("#btnLog").onclick = () => { logRender(); $("#logDlg").showModal(); if (S.on && !LB) logRequest(); };
 $("#logX").onclick = () => $("#logDlg").close();
@@ -850,9 +899,10 @@ function render(){
   $("#dAh").textContent = isNum(b.ah) && live ? Math.abs(b.ah).toFixed(1) + " Ah" : "--";
   $("#dSA").textContent = fmt(live ? s.a : NaN, 1, " A");
   $("#dSt").textContent = live ? (MPPT[s.st] || "--") : "--";
-  $("#dY").textContent = fmt(live ? s.y : NaN, 2, " kWh");
+  $("#dY").textContent = live && isNum(s.y) ? Math.round(s.y * 1000) + " Wh" : "--";
   const fault = P && ((P.pf & 4) || (P.err > 0 && P.err < 255));
-  const dF = $("#dF"); dF.textContent = !P ? "--" : fault ? (P.err > 0 && P.err < 255 ? "Error " + P.err : "Fault") : "No faults";
+  const dF = $("#dF"); dF.textContent = !P ? "--" : fault ? (P.fc >= 128 ? "Shunt alarm" : P.err > 0 && P.err < 255 ? "Err " + P.err : "Fault") : "No faults";
+  dF.title = P && P.fc ? faultTxt(P.fc) : "";
   dF.style.color = !P ? "" : fault ? "var(--bad)" : "var(--ok)";
   const dR = $("#dR"); dR.textContent = P ? String(P.resets) : "--"; dR.style.color = P && P.resets ? "var(--warn)" : "";
 
@@ -880,7 +930,10 @@ function render(){
       const tLow = H ? H.newest - (H.series[2].length - 1 - li) * step : Date.now();
       $("#tLow").textContent = "low " + Math.round(vals[li]) + "% at " + clock(Math.min(Date.now(), tLow)).replace(/^\w{3} /, "");
       const span = H ? (vals.length - 1) * step : 0, t0 = Date.now() - span, lab = $("#tLab").children;
-      for (let k = 0; k < 3; k++) lab[k].textContent = span ? clock(t0 + span * k / 3).replace(/:\d\d /, " ").replace(/^\w{3} /, "") : "";
+      for (let k = 0; k < 3; k++) {
+        const c = clock(t0 + span * k / 3).replace(/^\w{3} /, "");
+        lab[k].textContent = !span ? "" : span < 6 * 3600000 ? c : c.replace(/:\d\d /, " ");
+      }
     }
   }
 
@@ -916,10 +969,10 @@ function render(){
 
   /* --- today --- */
   const solIn = live && isNum(s.y) ? s.y : NaN, used = P && isNum(P.vanWh) ? P.vanWh / 1000 : NaN;
-  $("#tdSol").textContent = isNum(solIn) ? solIn.toFixed(2) + " kWh" : "--";
-  $("#tdVan").textContent = isNum(used) ? used.toFixed(2) + " kWh" : "--";
+  $("#tdSol").textContent = isNum(solIn) ? Math.round(solIn * 1000) + " Wh" : "--";
+  $("#tdVan").textContent = isNum(used) ? Math.round(used * 1000) + " Wh" : "--";
   const bal = isNum(solIn) && isNum(used) ? solIn - used : NaN, be = $("#tdBal");
-  be.textContent = isNum(bal) ? (bal >= 0 ? "+" : "−") + Math.abs(bal).toFixed(2) + " kWh" : "--";
+  be.textContent = isNum(bal) ? (bal >= 0 ? "+" : "−") + Math.abs(Math.round(bal * 1000)) + " Wh" : "--";
   be.style.color = isNum(bal) ? (bal >= 0 ? "var(--ok)" : "var(--warn)") : "";
   $("#tdBalL").textContent = isNum(bal) ? (bal >= 0 ? "Ahead today" : "Behind today") : "Balance";
   $("#tdLow").textContent = P && isNum(P.low) ? Math.round(P.low) + "%" : "--";
@@ -949,6 +1002,7 @@ function alarmWhy(k){
   }
   if (k === 5) {
     const P = S.p;
+    if (P && P.fc) return faultTxt(P.fc);
     if (P && P.err > 0 && P.err < 255) return "solar charger error " + P.err;
     return "a Victron device reports a fault";
   }
@@ -967,8 +1021,10 @@ function warmMsg(){                                 // "WAECO WARM: ALARM IN 12m
   }
   return best ? best.m : "";
 }
+function leftTxt(m){ return m === 0xFFFF ? "until turned on" : m >= 60 ? Math.floor(m / 60) + " h " + String(m % 60).padStart(2, "0") + " m" : m + " m"; }
 function renderBanner(live){
   const el = $("#banner"), txt = $("#bannerTxt"), btns = $("#bannerBtns"), t = S.t;
+  const AL = live && S.al && (cfg.demo || Date.now() - S.al.t < 8000) ? S.al : null;
   btns.innerHTML = "";
   if (!live) { el.className = "off"; txt.textContent = S.on ? "No data" : "Not connected"; return; }
   const sounding = t.lat & ~t.sil;
@@ -978,13 +1034,20 @@ function renderBanner(live){
     for (const [lbl, n] of [["30 min", 1], ["Until cleared", 2]]) {
       const bt = document.createElement("button"); bt.textContent = lbl; bt.onclick = () => sendCmd(n); btns.appendChild(bt);
     }
+  } else if (AL && AL.sall) {
+    el.className = "mute"; txt.textContent = "ALL SILENCED \u00B7 " + leftTxt(AL.sall);
+    const bt = document.createElement("button"); bt.textContent = "End"; bt.onclick = () => alCmd([0x19, 0]); btns.appendChild(bt);
   } else if (t.lat) {
     const names = []; for (let k = 0; k < NAL; k++) if (t.lat & (1 << k)) names.push(SHORT[k]);
     el.className = "mute"; txt.textContent = "SILENCED: " + names.join(", ");
+    if (AL) { const bt = document.createElement("button"); bt.textContent = "Sound again"; bt.onclick = () => alCmd([0x1A]); btns.appendChild(bt); }
   } else if (warmMsg()) {
-    el.className = "warn"; txt.textContent = warmMsg();
+    el.className = "warn"; txt.textContent = warmMsg() + (AL && (AL.mask & 2) ? " (ALARM OFF)" : "");
   } else if (Number.isNaN(S.b.soc)) {
     el.className = "warn"; txt.textContent = "SENSOR LOST: SHUNT";
+  } else if (AL && AL.mask) {
+    const off = []; for (let k = 0; k < 7; k++) if (AL.mask & (1 << k)) off.push(OFFN[k]);
+    el.className = "mute"; txt.textContent = "ALL OK \u00B7 " + (off.length === 1 ? off[0] + " OFF" : off.length + " ALARMS OFF");
   } else { el.className = ""; txt.textContent = t.quiet ? "ALL OK \u00B7 quiet hours" : "ALL OK"; }
   if (top !== lastShown) { if (top >= 0 && !NATIVE) beeps(BEEPS[top]); lastShown = top; }
 }
@@ -1049,13 +1112,8 @@ const GROUPS = [
     { k: "stp", i: 4, l: "Alarm after it stays warm for", u: "min", step: 1 } ] },
   { t: "Grey water", rows: [
     { k: "stp", i: 5, l: "Clear after the float is open for", u: "min", step: 1 } ] },
-  { t: "Which alarms are on", rows: [
-    { k: "bit", i: 7, b: 0, l: "Battery critical" }, { k: "bit", i: 7, b: 1, l: "Fridge warm" },
-    { k: "bit", i: 7, b: 2, l: "Battery low" }, { k: "bit", i: 7, b: 3, l: "Grey water full" },
-    { k: "bit", i: 7, b: 4, l: "Sensor lost" }, { k: "nbit", i: 7, b: 5, l: "Victron fault (needs controller v1.4)" } ] },
-  { t: "Silencing and sound", rows: [
-    { k: "stp", i: 6, l: "Silence lasts", u: "min", step: 5 },
-    { k: "tog", i: 8, l: "Buzzer on the controller" } ] },
+  { t: "Silencing", rows: [
+    { k: "stp", i: 6, l: "Silence lasts", u: "min", step: 5 } ] },
   { t: "Sensor lost", n: "Raises an alarm if a sensor you have switched on stops reporting.", rows: [
     { k: "stp", i: 17, l: "Alarm after it is silent for", u: "min", step: 1 },
     { k: "bit", i: 18, b: 0, l: "Watch the battery shunt" }, { k: "bit", i: 18, b: 1, l: "Watch the solar controller" },
@@ -1167,6 +1225,58 @@ function cfgRefresh(){
   }
 }
 setInterval(() => { if ($("#settings").classList.contains("on")) cfgRefresh(); }, 500);
+
+/* ---------------- alarms on / off (v1.5 controller) ---------------- */
+const AL_ROWS = [[0, "Battery critical"], [2, "Battery low"], [1, "Fridge warm"], [3, "Grey water"], [4, "Sensor lost"], [5, "Victron fault"], [6, "Buzzer on the controller"]];
+let offPick = -1;
+async function alCmd(arr){
+  if (cfg.demo) { demoAl(arr); return; }
+  if (!unlocked()) { setPill("Enter the PIN in Settings"); showTab("settings"); return; }
+  if (!(await sendBytes(arr))) setPill("Write failed");
+}
+function alBuild(){
+  const box = $("#alRows"); box.innerHTML = "";
+  for (const [i, l] of AL_ROWS) {
+    const row = el("div", "srow"), lab = el("div", "sl", l), sub = el("span", "gn", ""), cb = el("input");
+    sub.style.display = "block"; lab.appendChild(sub);
+    cb.type = "checkbox"; cb.className = "sw";
+    cb.onchange = () => {
+      const isOn = cb.checked; cb.checked = !isOn;                 // shown state follows the controller
+      if (isOn) alCmd([0x18, i, 0]);
+      else { offPick = i; $("#offT").textContent = "Turn off " + (i === 6 ? "the buzzer" : l) + "?"; $("#offDlg").showModal(); }
+    };
+    row._i = i; row._sub = sub; row._cb = cb;
+    row.append(lab, cb); box.appendChild(row);
+  }
+}
+document.querySelectorAll("#offDlg [data-how]").forEach(b => b.onclick = () => { $("#offDlg").close(); if (offPick >= 0) alCmd([0x18, offPick, +b.dataset.how]); offPick = -1; });
+$("#offX").onclick = () => { offPick = -1; $("#offDlg").close(); };
+function alRefresh(){
+  const AL = S.al && (cfg.demo || Date.now() - S.al.t < 8000) ? S.al : null, ok = AL && (S.on || cfg.demo) && unlocked();
+  for (const row of $("#alRows").children) {
+    const i = row._i, off = AL && (AL.mask & (1 << i));
+    row._cb.checked = !!AL && !off;
+    row._sub.textContent = !AL ? (S.on ? "needs controller v1.5" : "") : off ? "Off · " + (AL.mins[i] === 0xFFFF ? "until you turn it on" : leftTxt(AL.mins[i]) + " left") : "On";
+    row._sub.style.color = off ? "var(--warn)" : "";
+    row.classList.toggle("off", !ok);
+  }
+  const sb = $("#saBtns"); sb.innerHTML = "";
+  if (AL && AL.sall) {
+    $("#saTxt").textContent = "Silenced · " + leftTxt(AL.sall) + " left";
+    const b = el("button", "btn ghost", "End"); b.onclick = () => alCmd([0x19, 0]); sb.appendChild(b);
+  } else {
+    $("#saTxt").textContent = "Critical battery still sounds";
+    for (const h of [1, 8]) { const b = el("button", "btn ghost", h + " h"); b.onclick = () => alCmd([0x19, h]); sb.appendChild(b); }
+  }
+  sb.style.opacity = ok ? "" : 0.4; sb.style.pointerEvents = ok ? "" : "none";
+}
+setInterval(() => { if ($("#settings").classList.contains("on")) alRefresh(); }, 1000);
+function demoAl(arr){
+  S.al = S.al || { mask: 0, sall: 0, mins: [0, 0, 0, 0, 0, 0, 0], t: Date.now() };
+  if (arr[0] === 0x18) { const i = arr[1], h = arr[2]; if (h === 0) { S.al.mask &= ~(1 << i); S.al.mins[i] = 0; } else { S.al.mask |= 1 << i; S.al.mins[i] = h === 1 ? 720 : h === 2 ? 4320 : 0xFFFF; } }
+  if (arr[0] === 0x19) S.al.sall = arr[1] * 60;
+  S.al.t = Date.now(); alRefresh();
+}
 
 /* phone-only settings */
 $("#sTrack").onchange = () => { cfg.track = +$("#sTrack").value || 2000; save(); };
@@ -1318,7 +1428,7 @@ function showTab(name){
   document.querySelectorAll("main section").forEach(sx => sx.classList.toggle("on", sx.id === name));
   if (name === "settings") {
     $("#sTrack").value = cfg.track; $("#sHitch").value = cfg.hitch; $("#sSound").checked = cfg.sound; $("#sDemo").checked = cfg.demo; tolShow();
-    $("#sLat").value = cfg.lat; $("#sLon").value = cfg.lon; ctlRefresh();
+    $("#sLat").value = cfg.lat; $("#sLon").value = cfg.lon; ctlRefresh(); alRefresh();
     if (S.on && !cfgAll() && Date.now() - cfgAsked > 3000) reqCfg();
     cfgRefresh();
   }
@@ -1333,6 +1443,7 @@ $("#btnSet").onclick = () => showTab("settings");
 $("#btnPin").onclick = pinSave;
 $("#sPin").addEventListener("keydown", e => { if (e.key === "Enter") pinSave(); });
 buildCfg();
+alBuild();
 pinLoad().then(pinShow);
 if (NATIVE) {
   $("#btnConn").style.display = "none";
@@ -1362,9 +1473,9 @@ function startDemo(){
       Array.from({ length: n }, (_, i) => Math.max(0, 260 * Math.sin((i - 60) / 288 * 2 * Math.PI * 1.0))) ] };
     histNser = 4;
     const h = 3600000;
-    LOG = [{ a: 4, e: 1, t: now - 27 * h }, { a: 4, e: 5, t: now - 27 * h + 120000 }, { a: 3, e: 1, t: now - 18 * h },
-           { a: 3, e: 3, t: now - 18 * h + 60000 }, { a: 1, e: 1, t: now - 6 * h }, { a: 1, e: 2, t: now - 6 * h + 300000 },
-           { a: 1, e: 5, t: now - 6 * h + 17 * 60000 }];
+    LOG = [{ a: 4, e: 1, t: now - 27 * h, i: 2 }, { a: 4, e: 5, t: now - 27 * h + 120000 }, { a: 3, e: 1, t: now - 18 * h },
+           { a: 3, e: 3, t: now - 18 * h + 60000 }, { a: 1, e: 1, t: now - 6 * h, i: 1 }, { a: 1, e: 2, t: now - 6 * h + 300000 },
+           { a: 1, e: 5, t: now - 6 * h + 17 * 60000 }, { a: 5, e: 1, t: now - 1 * h, i: 128 }, { a: 5, e: 5, t: now - 1 * h + 95000 }];
     logRender();
   }
   demoTimer = setInterval(() => {
@@ -1377,12 +1488,13 @@ function startDemo(){
     S.b = { soc: 64 - (t / 600), v: 13.1, i: -3.66, ah: -72, ttg: 800 };
     S.s = { w: 13, a: 0.92, y: 1.32, st: 2 };
     S.p = { sol: 12, van: 60, mains: false, bat: -48, full: NaN, vanWh: 1610, low: 71, pf: 3, resets: 0, logTotal: 7, err: 0, t: Date.now() };
+    S.al = Object.assign(S.al || { mask: 0, sall: 0, mins: [0, 0, 0, 0, 0, 0, 0] }, { t: Date.now() });
     if (t > 20 && !demoLat) demoLat = 8;            // grey water alarm after 20 s
     S.t = { wae: t > 8 ? 8.6 : 7.5, dom: 4.1, flags: demoLat ? 1 : 0, lat: demoLat, sil: demoSil, shown: -1, quiet: false };
     S.lastRx = Date.now();
   }, 200);
 }
-function stopDemo(){ clearInterval(demoTimer); demoLat = demoSil = 0; S.t = {}; S.buf = []; S.a = null; S.p = null; }
+function stopDemo(){ clearInterval(demoTimer); demoLat = demoSil = 0; S.t = {}; S.buf = []; S.a = null; S.p = null; S.al = null; }
 function demoSilence(n){ if (!demoLat) return; demoSil = demoLat; }
 
 logRender();
@@ -1390,7 +1502,7 @@ if (cfg.demo) startDemo();
 setInterval(() => { try { render(); } catch (e) { dbgErr("render: " + e.message); } }, 200);
 try { render(); } catch (e) { dbgErr("render: " + e.message); }
 setInterval(() => {
-  $("#diag").textContent = "build 8 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
+  $("#diag").textContent = "build 10 \u00B7 " + (NATIVE ? "app" : "browser") + " \u00B7 Capacitor " + (window.Capacitor ? "yes" : "no")
     + " \u00B7 " + (S.on ? "connected" : "not connected") + " \u00B7 packets " + DBG.n
     + (DBG.n ? " (" + Math.round((Date.now() - DBG.ev) / 1000) + "s ago)" : "");
 }, 500);

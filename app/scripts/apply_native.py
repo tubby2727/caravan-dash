@@ -60,6 +60,15 @@ COMPONENTS = """
                 android:name="android.appwidget.provider"
                 android:resource="@xml/caravan_widget_info" />
         </receiver>
+
+        <receiver android:name=".CaravanWidgetSmall" android:exported="false" android:label="Caravan (small)">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/caravan_widget_small_info" />
+        </receiver>
 """
 
 mf = ANDROID / "app/src/main/AndroidManifest.xml"

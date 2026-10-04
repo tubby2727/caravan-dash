@@ -61,6 +61,7 @@ public class BleService extends Service {
             UUID.fromString("c0a7a5e0-0008-4c1b-9f6e-5a1d0c4a0001"),   // history
             UUID.fromString("c0a7a5e0-0009-4c1b-9f6e-5a1d0c4a0001"),   // power (v1.4)
             UUID.fromString("c0a7a5e0-000a-4c1b-9f6e-5a1d0c4a0001"),   // alarm log (v1.4)
+            UUID.fromString("c0a7a5e0-000b-4c1b-9f6e-5a1d0c4a0001"),   // alarms off (v1.5)
     };
     static final UUID CMD = UUID.fromString("c0a7a5e0-0006-4c1b-9f6e-5a1d0c4a0001");
     static final UUID CCC = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");

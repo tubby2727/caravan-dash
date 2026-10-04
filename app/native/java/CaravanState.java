@@ -13,12 +13,18 @@ final class CaravanState {
     static volatile float wae = Float.NaN, dom = Float.NaN;
     static volatile int mppt = 255, flags = 0, latched = 0, silenced = 0, shown = -1;
     /** v1.4 power packet: MPPT error code (0 none, 255 no data) and flags (bit2 = Victron fault now). */
-    static volatile int mpptErr = 255, powerFlags = 0;
+    static volatile int mpptErr = 255, powerFlags = 0, faultCode = 0;
+    /** v1.4 power flow from the controller (smoothed there): solar, battery, van W, minutes to full. */
+    static volatile float pfSol = Float.NaN, pfBat = Float.NaN, pfVan = Float.NaN, pfFull = Float.NaN;
+    static volatile boolean pfMains = false;
+    /** v1.5: alarms switched off (bit n = alarm n, bit 6 = buzzer) and Silence all minutes left. */
+    static volatile int offMask = 0, silenceAllMin = 0;
+    static volatile long pfRx = 0;
     static volatile long lastRx = 0;
     static volatile boolean connected = false;
     static volatile String conn = "searching";
 
-    private static final byte[][] raw = new byte[8][];
+    private static final byte[][] raw = new byte[10][];
     /** Latest copy of every controller setting (index order as in caravan_ble.yaml), Integer.MIN_VALUE = not received. */
     static final int[] cfg = new int[20];
     static {
@@ -28,14 +34,14 @@ final class CaravanState {
     private CaravanState() {}
 
     static synchronized void store(int idx, byte[] v) {
-        if ((idx >= 0 && idx < 4) || idx == 6) raw[idx] = v;
+        if ((idx >= 0 && idx < 4) || idx == 6 || idx == 8) raw[idx] = v;
         if (idx == 4 && v != null && v.length >= 3 && (v[0] & 0xFF) < cfg.length) {
             cfg[v[0] & 0xFF] = (short) ((v[1] & 0xFF) | (v[2] << 8));
         }
     }
 
     static synchronized byte[] get(int idx) {
-        return ((idx >= 0 && idx < 4) || idx == 6) ? raw[idx] : null;
+        return ((idx >= 0 && idx < 4) || idx == 6 || idx == 8) ? raw[idx] : null;
     }
 
     /** idx: 0 level (not decoded here), 1 battery, 2 solar, 3 status. Same layout as caravan_ble.yaml. */
@@ -52,9 +58,21 @@ final class CaravanState {
             solarA = s16(b, 2, 100f);
             yieldKwh = b.getFloat(4);
             mppt = v[8] & 0xFF;
+        } else if (idx == 8 && v.length >= 17) {
+            offMask = v[0] & 0xFF;
+            silenceAllMin = (v[1] & 0xFF) | ((v[2] & 0xFF) << 8);
+            return;
         } else if (idx == 6 && v.length >= 17) {
+            pfSol = s16(b, 0, 1f);
+            short vn = b.getShort(2);
+            pfMains = vn == 0x7FFE;
+            pfVan = pfMains ? Float.NaN : s16(b, 2, 1f);
+            pfBat = s16(b, 4, 1f);
+            pfFull = s16(b, 6, 1f);
+            pfRx = System.currentTimeMillis();
             powerFlags = v[12] & 0xFF;
             mpptErr = v[16] & 0xFF;
+            faultCode = v.length >= 18 ? v[17] & 0xFF : 0;
             return;                                   // not counted as "fresh" data: the status packet does that
         } else if (idx == 3 && v.length >= 8) {
             wae = s16(b, 0, 10f);
@@ -76,6 +94,16 @@ final class CaravanState {
 
     static boolean fresh() {
         return connected && System.currentTimeMillis() - lastRx < 10000;
+    }
+
+    /** The v1.4 power packet has arrived in the last 10 s. */
+    static boolean powerFresh() {
+        return fresh() && System.currentTimeMillis() - pfRx < 10000;
+    }
+
+    /** Fridge warm limit in C from the controller settings (index 2 Waeco, 3 Dometic). */
+    static float limit(int i) {
+        return cfgOr(i, 80) / 10f;
     }
 
     static boolean greyFull() {
@@ -157,7 +185,15 @@ final class CaravanState {
                 String l = lostList();
                 return l.isEmpty() ? "A sensor has stopped reporting" : "No data from: " + l;
             }
-            case 5:
+            case 5: {
+                int c = faultCode;
+                String[] sh = {"low voltage", "high voltage", "low SOC", "low starter voltage", "high starter voltage",
+                        "low temperature", "high temperature", "mid-point voltage", "overload", "DC ripple"};
+                if (c >= 128) return "Battery shunt alarm: " + (c - 128 < sh.length ? sh[c - 128] : "code " + (c - 128));
+                if (c == 126) return "Test fault (web page switch)";
+                if (c == 127) return "Solar charger is in its fault state";
+                if (c > 0) return "Solar charger Err " + c + ". Check VictronConnect for details";
+            }
                 if (mpptErr > 0 && mpptErr < 255) return "Solar charger error " + mpptErr + ". Check the VictronConnect app for details";
                 return "A Victron device (battery shunt or solar charger) reports a fault";
             default:
